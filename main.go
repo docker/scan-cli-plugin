@@ -22,7 +22,8 @@ func main() {
 }
 
 func newScanCmd(dockerCli command.Cli) *cobra.Command {
-	return &cobra.Command{
+	var auth string
+	cmd := &cobra.Command{
 		Short:       "Docker Scan",
 		Long:        `A tool to scan your docker image`,
 		Use:         "scan [OPTIONS] IMAGE",
@@ -32,7 +33,18 @@ func newScanCmd(dockerCli command.Cli) *cobra.Command {
 				return fmt.Errorf(`"docker run" requires at least 1 argument.
 See 'docker scan --help'.`)
 			}
-
+			if auth != "" {
+				fmt.Println("Authenticating to Snyk using", auth)
+				c := exec.Command("snyk", "auth", auth)
+				c.Stdin = os.Stdin
+				c.Stdout = os.Stdout
+				c.Stderr = os.Stderr
+				if err := c.Run(); err != nil {
+					return err
+				}
+				fmt.Println("Authenticated")
+				fmt.Println()
+			}
 			c := exec.Command("snyk", "test", "--docker", args[0])
 			c.Stdin = os.Stdin
 			c.Stdout = os.Stdout
@@ -40,4 +52,6 @@ See 'docker scan --help'.`)
 			return c.Run()
 		},
 	}
+	cmd.Flags().StringVar(&auth, "auth", "", "Use snyk API token to authenticate on snyk.io")
+	return cmd
 }
