@@ -12,20 +12,14 @@ build: ## Build docker-scan
 
 .PHONY: dbuild
 dbuild: ## Build docker-scan in a container
-	@docker build . \
+	docker build . \
 	--output type=local,dest=./bin \
 	--target scan
 
 .PHONY: cross
 cross: ## Cross compile docker-scan binaries
-	@GOOS=linux   GOARCH=amd64 $(GO_BUILD) -o $(BINARY)-linux-amd64 .
-	@GOOS=darwin  GOARCH=amd64 $(GO_BUILD) -o $(BINARY)-darwin-amd64 .
-	@GOOS=windows GOARCH=amd64 $(GO_BUILD) -o $(BINARY)-windows-amd64.exe .
-
-.PHONY: dcross
-dcross: ## Cross compile docker-scan in a container
-	@docker build . \
-	--output type=local,dest=./bin \
+	docker build . \
+	--output type=local,dest=./dist \
 	--target cross
 
 .PHONY: install

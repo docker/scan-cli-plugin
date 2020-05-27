@@ -1,0 +1,29 @@
+builds:
+  - binary: docker-scan
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -v
+    goarch:
+      - amd64
+    goos:
+      - linux
+      - darwin
+      - windows
+archives:
+  - replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      amd64: x86_64
+checksum:
+  name_template: "checksums.txt"
+release:
+  draft: true
+  prerelease: true
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
