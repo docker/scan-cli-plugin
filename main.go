@@ -21,7 +21,7 @@ func main() {
 	})
 }
 
-func newScanCmd(dockerCli command.Cli) *cobra.Command {
+func newScanCmd(_ command.Cli) *cobra.Command {
 	var auth string
 	cmd := &cobra.Command{
 		Short:       "Docker Scan",
@@ -30,6 +30,7 @@ func newScanCmd(dockerCli command.Cli) *cobra.Command {
 		Annotations: map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
+				//nolint:golint
 				return fmt.Errorf(`"docker run" requires at least 1 argument.
 See 'docker scan --help'.`)
 			}

@@ -39,6 +39,7 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/xlab/handysort v0.0.0-20150421192137-fb3537ed64a1 // indirect
+	golang.org/x/sys v0.0.0-20200523222454-059865788121 // indirect
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
 	gopkg.in/gorethink/gorethink.v3 v3.0.5 // indirect
