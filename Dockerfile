@@ -2,6 +2,9 @@
 
 FROM golang:1.14 AS builder
 WORKDIR /go/src/github.com/docker/docker-scan
+COPY go.* ./
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    go mod download
 COPY . .
 
 FROM builder AS build
@@ -17,3 +20,10 @@ RUN ./bin/goreleaser build --snapshot
 
 FROM scratch AS cross
 COPY --from=cross-build /go/src/github.com/docker/docker-scan/dist /
+
+FROM builder AS e2e
+# install docker CLI
+COPY --from=docker:19.03.9 /usr/local/bin/docker /usr/local/bin/docker
+# install docker-scan plugin
+COPY --from=build /go/src/github.com/docker/docker-scan/bin/docker-scan /root/.docker/cli-plugins/docker-scan
+CMD ["make", "e2e-tests"]
