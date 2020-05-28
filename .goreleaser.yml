@@ -1,15 +1,3 @@
-builds:
-  - binary: docker-scan
-    env:
-      - CGO_ENABLED=0
-    flags:
-      - -v
-    goarch:
-      - amd64
-    goos:
-      - linux
-      - darwin
-      - windows
 archives:
   - replacements:
       darwin: Darwin
