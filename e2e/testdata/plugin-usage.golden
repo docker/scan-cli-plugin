@@ -1,0 +1,7 @@
+
+Usage:	docker scan [OPTIONS] IMAGE
+
+A tool to scan your docker image
+
+Options:
+      --auth string   Use snyk API token to authenticate on snyk.io
