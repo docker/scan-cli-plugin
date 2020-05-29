@@ -18,7 +18,8 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 COPY . .
 
 FROM builder AS build
-RUN --mount=type=cache,target=/root/.cache/go-build \
+RUN --mount=target=. \
+    --mount=type=cache,target=/root/.cache/go-build \
     make build
 
 FROM scratch AS scan
