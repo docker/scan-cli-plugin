@@ -47,5 +47,6 @@ jobs:
 
       - name: Build Cross
         run: make cross
+
       - name: Tests
         run: make e2e

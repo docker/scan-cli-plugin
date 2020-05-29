@@ -8,6 +8,7 @@ import (
 	"github.com/docker/cli/cli-plugins/manager"
 	"github.com/docker/cli/cli-plugins/plugin"
 	"github.com/docker/cli/cli/command"
+	"github.com/docker/docker-scan/internal"
 	"github.com/spf13/cobra"
 )
 
@@ -17,18 +18,29 @@ func main() {
 	}, manager.Metadata{
 		SchemaVersion: "0.1.0",
 		Vendor:        "Docker Inc.",
-		Version:       "0.1.0-poc",
+		Version:       internal.Version,
 	})
 }
 
 func newScanCmd(_ command.Cli) *cobra.Command {
-	var auth string
+	var (
+		auth        string
+		showVersion bool
+	)
 	cmd := &cobra.Command{
 		Short:       "Docker Scan",
 		Long:        `A tool to scan your docker image`,
 		Use:         "scan [OPTIONS] IMAGE",
 		Annotations: map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if showVersion {
+				version, err := internal.FullVersion()
+				if err != nil {
+					return err
+				}
+				fmt.Println(version)
+				return nil
+			}
 			if len(args) != 1 {
 				//nolint:golint
 				return fmt.Errorf(`"docker run" requires at least 1 argument.
@@ -54,5 +66,6 @@ See 'docker scan --help'.`)
 		},
 	}
 	cmd.Flags().StringVar(&auth, "auth", "", "Use snyk API token to authenticate on snyk.io")
+	cmd.Flags().BoolVar(&showVersion, "version", false, "Display version of scan plugin and snyk cli")
 	return cmd
 }
