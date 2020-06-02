@@ -1,16 +1,11 @@
 # syntax = docker/dockerfile:experimental
 ARG GO_VERSION=1.14.3
 ARG CLI_VERSION=19.03.9
+ARG ALPINE_VERSION=3.12.0
 
 FROM golang:${GO_VERSION} AS builder
-ARG SNYK_VERSION=1.332.0
 WORKDIR /go/src/github.com/docker/docker-scan
 
-# install NPM then Snyk
-RUN curl -sL https://deb.nodesource.com/setup_13.x | bash -
-RUN apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/*
-RUN npm install -g snyk@$SNYK_VERSION
 # cache go vendoring
 COPY go.* ./
 RUN --mount=type=cache,target=/root/.cache/go-build \
@@ -34,9 +29,27 @@ COPY --from=cross-build /go/src/github.com/docker/docker-scan/dist /
 
 FROM docker:${CLI_VERSION} AS cli
 
+FROM alpine:${ALPINE_VERSION} AS snyk
+ARG SNYK_DESKTOP_VERSION=1.332.0
+ARG SNYK_USER_VERSION=1.334.0
+
+RUN apk add -U --no-cache wget 
+# install snyk desktop binary
+WORKDIR /root
+RUN wget https://github.com/snyk/snyk/releases/download/v${SNYK_DESKTOP_VERSION}/snyk-linux -O snyk-desktop
+# install snyk user binary
+RUN wget https://github.com/snyk/snyk/releases/download/v${SNYK_USER_VERSION}/snyk-linux -O snyk-user
+
 FROM builder AS e2e
-ARG SNYK_VERSION=1.332.0
-ENV SNYK_VERSION=${SNYK_VERSION}
+ARG SNYK_DESKTOP_VERSION=1.332.0
+ENV SNYK_DESKTOP_VERSION=${SNYK_DESKTOP_VERSION}
+ARG SNYK_USER_VERSION=1.334.0
+ENV SNYK_USER_VERSION=${SNYK_USER_VERSION}
+
+# install snyk binaries
+COPY --from=snyk /root/snyk-desktop /root/.docker/scan/snyk
+COPY --from=snyk /root/snyk-user /root/e2e/snyk
+RUN chmod +x /root/.docker/scan/snyk /root/e2e/snyk
 # install docker CLI
 COPY --from=cli /usr/local/bin/docker /usr/local/bin/docker
 # install docker-scan plugin
