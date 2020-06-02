@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/pkg/errors"
@@ -21,8 +22,11 @@ func ReadConfigFile() (Config, error) {
 	var conf Config
 	path := filepath.Join(cliConfig.Dir(), "scan", "config.json")
 	buf, err := ioutil.ReadFile(path)
+	if os.IsNotExist(err) {
+		return conf, nil
+	}
 	if err != nil {
-		return conf, errors.Wrapf(err, "failed to read docker scan configuration file %s", path)
+		return conf, errors.Wrap(err, "failed to read docker scan configuration file")
 	}
 	if err := json.Unmarshal(buf, &conf); err != nil {
 		return conf, errors.Wrapf(err, "invalid docker scan configuration file %s", path)

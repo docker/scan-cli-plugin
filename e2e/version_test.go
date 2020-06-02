@@ -26,7 +26,7 @@ func TestVersionSnykDesktopBinary(t *testing.T) {
 	err = ioutil.WriteFile(fmt.Sprintf("%s/scan/config.json", configDir), buf, 0644)
 	assert.NilError(t, err)
 
-	// docker --help should list app as a top command
+	// docker scan --version should print docker scan plugin version and snyk version
 	cmd.Command = dockerCli.Command("scan", "--version")
 	output := icmd.RunCmd(cmd).Assert(t, icmd.Success).Combined()
 	expected := fmt.Sprintf(
@@ -36,6 +36,18 @@ Provider:   %s
 `, internal.Version, internal.GitCommit, getProviderVersion())
 
 	assert.Equal(t, output, expected)
+}
+
+func TestVersionWithoutSnykOrConfig(t *testing.T) {
+	cmd, _, cleanup := dockerCli.createTestCmd()
+	defer cleanup()
+
+	// docker scan --version should fail with a clean error
+	cmd.Command = dockerCli.Command("scan", "--version")
+	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
+		ExitCode: 1,
+		Err:      "could not find Snyk binary",
+	})
 }
 
 func getProviderVersion() string {
