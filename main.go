@@ -5,6 +5,8 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/docker/docker-scan/config"
+
 	"github.com/docker/cli/cli-plugins/manager"
 	"github.com/docker/cli/cli-plugins/plugin"
 	"github.com/docker/cli/cli/command"
@@ -34,7 +36,11 @@ func newScanCmd(_ command.Cli) *cobra.Command {
 		Use:         "scan [OPTIONS] IMAGE",
 		Annotations: map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			scanProvider := provider.NewSnykProvider()
+			conf, err := config.ReadConfigFile()
+			if err != nil {
+				return err
+			}
+			scanProvider := provider.NewSnykProvider(conf.Path)
 			if showVersion {
 				version, err := internal.FullVersion(scanProvider)
 				if err != nil {

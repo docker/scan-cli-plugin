@@ -21,22 +21,22 @@ type dockerCliCommand struct {
 	cliPluginDir string
 }
 
-type ConfigFileOperator func(configFile *dockerConfigFile.ConfigFile)
-
-func (d dockerCliCommand) createTestCmd(ops ...ConfigFileOperator) (icmd.Cmd, func()) {
+func (d dockerCliCommand) createTestCmd() (icmd.Cmd, string, func()) {
 	configDir, err := ioutil.TempDir("", "config")
 	if err != nil {
 		panic(err)
 	}
+	if err := os.MkdirAll(filepath.Join(configDir, "scan"), 0644); err != nil {
+		panic(err)
+	}
+	createSymLink("snyk", "/root/.docker/scan", filepath.Join(configDir, "scan"))
+
 	configFilePath := filepath.Join(configDir, "config.json")
 	config := dockerConfigFile.ConfigFile{
 		CLIPluginsExtraDirs: []string{
 			d.cliPluginDir,
 		},
 		Filename: configFilePath,
-	}
-	for _, op := range ops {
-		op(&config)
 	}
 	configFile, err := os.Create(configFilePath)
 	if err != nil {
@@ -54,7 +54,7 @@ func (d dockerCliCommand) createTestCmd(ops ...ConfigFileOperator) (icmd.Cmd, fu
 	env := append(os.Environ(),
 		"DOCKER_CONFIG="+configDir,
 		"DOCKER_CLI_EXPERIMENTAL=enabled") // TODO: Remove this once docker app plugin is no more experimental
-	return icmd.Cmd{Env: env}, cleanup
+	return icmd.Cmd{Env: env}, configDir, cleanup
 }
 
 func (d dockerCliCommand) Command(args ...string) []string {
@@ -70,18 +70,17 @@ func TestMain(m *testing.M) {
 	}
 	//nolint:errcheck
 	defer os.RemoveAll(cliPluginDir)
-	createDockerAppSymLink("/root/.docker/cli-plugins/docker-scan", cliPluginDir)
+	createSymLink("docker-scan", "/root/.docker/cli-plugins", cliPluginDir)
 
 	dockerCli = dockerCliCommand{path: "docker", cliPluginDir: cliPluginDir}
 	os.Exit(m.Run())
 }
 
-func createDockerAppSymLink(dockerScan, configDir string) {
-	dockerScanExecName := "docker-scan"
+func createSymLink(binaryName, sourceDir, configDir string) {
 	if runtime.GOOS == "windows" {
-		dockerScanExecName += ".exe"
+		binaryName += ".exe"
 	}
-	if err := os.Symlink(dockerScan, filepath.Join(configDir, dockerScanExecName)); err != nil {
+	if err := os.Symlink(filepath.Join(sourceDir, binaryName), filepath.Join(configDir, binaryName)); err != nil {
 		panic(err)
 	}
 }
