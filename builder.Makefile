@@ -26,11 +26,11 @@ e2e:
 	go test -ldflags=$(LDFLAGS) ./e2e
 
 cross:
-	GOOS=linux   GOARCH=amd64 $(GO_BUILD) -o dist/docker-scan_linux_amd64/docker-scan/$(BINARY) .
-	GOOS=darwin  GOARCH=amd64 $(GO_BUILD) -o dist/docker-scan_darwin_amd64/docker-scan/$(BINARY) .
-	GOOS=windows GOARCH=amd64 $(GO_BUILD) -o dist/docker-scan_windows_amd64/docker-scan/$(BINARY).exe .
+	GOOS=linux   GOARCH=amd64 $(GO_BUILD) -o dist/docker-scan_linux_amd64/docker-scan/$(BINARY) ./cmd/docker-scan
+	GOOS=darwin  GOARCH=amd64 $(GO_BUILD) -o dist/docker-scan_darwin_amd64/docker-scan/$(BINARY) ./cmd/docker-scan
+	GOOS=windows GOARCH=amd64 $(GO_BUILD) -o dist/docker-scan_windows_amd64/docker-scan/$(BINARY).exe ./cmd/docker-scan
 
 .PHONY: build
 build:
 	mkdir -p bin
-	$(GO_BUILD) -o bin/$(BINARY) .
+	$(GO_BUILD) -o bin/$(BINARY) ./cmd/docker-scan
