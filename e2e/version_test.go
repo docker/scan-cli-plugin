@@ -15,6 +15,34 @@ import (
 	"gotest.tools/icmd"
 )
 
+func TestVersionSnykUserBinary(t *testing.T) {
+	// Add user snyk binary to the $PATH
+	path := os.Getenv("PATH")
+	defer func() { os.Setenv("PATH", path) }()
+	os.Setenv("PATH", fmt.Sprintf("%s:%s", "/root/e2e", path))
+
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
+	defer cleanup()
+
+	// Create a config file pointing to desktop snyk binary
+	conf := config.Config{Path: fmt.Sprintf("%s/scan/snyk", configDir)}
+	buf, err := json.MarshalIndent(conf, "", "  ")
+	assert.NilError(t, err)
+	err = ioutil.WriteFile(fmt.Sprintf("%s/scan/config.json", configDir), buf, 0644)
+	assert.NilError(t, err)
+
+	// docker scan --version should use user's Snyk binary
+	cmd.Command = dockerCli.Command("scan", "--version")
+	output := icmd.RunCmd(cmd).Assert(t, icmd.Success).Combined()
+	expected := fmt.Sprintf(
+		`Version:    %s
+Git commit: %s
+Provider:   %s
+`, internal.Version, internal.GitCommit, getProviderVersion("SNYK_USER_VERSION"))
+
+	assert.Equal(t, output, expected)
+}
+
 func TestVersionSnykDesktopBinary(t *testing.T) {
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
@@ -33,7 +61,7 @@ func TestVersionSnykDesktopBinary(t *testing.T) {
 		`Version:    %s
 Git commit: %s
 Provider:   %s
-`, internal.Version, internal.GitCommit, getProviderVersion())
+`, internal.Version, internal.GitCommit, getProviderVersion("SNYK_DESKTOP_VERSION"))
 
 	assert.Equal(t, output, expected)
 }
@@ -50,6 +78,6 @@ func TestVersionWithoutSnykOrConfig(t *testing.T) {
 	})
 }
 
-func getProviderVersion() string {
-	return fmt.Sprintf("Snyk (%s (standalone))", os.Getenv("SNYK_DESKTOP_VERSION"))
+func getProviderVersion(env string) string {
+	return fmt.Sprintf("Snyk (%s (standalone))", os.Getenv(env))
 }

@@ -14,6 +14,9 @@ type snykProvider struct {
 
 // NewSnykProvider returns a Snyk implementation of scan provider
 func NewSnykProvider(path string) Provider {
+	if p, err := exec.LookPath("snyk"); err == nil {
+		path = p
+	}
 	return &snykProvider{path}
 }
 
