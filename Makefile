@@ -19,6 +19,7 @@ BUILD_ARGS := --build-arg SNYK_DESKTOP_VERSION=$(SNYK_DESKTOP_VERSION)\
 build: ## Build docker-scan in a container
 	docker build $(BUILD_ARGS) . \
 	--output type=local,dest=./bin \
+	--platform local \
 	--target scan
 
 .PHONY: cross

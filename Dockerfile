@@ -7,7 +7,7 @@ ARG GOLANGCI_LINT_VERSION=v1.27.0-alpine
 ####
 # BUILDER
 ####
-FROM golang:${GO_VERSION} AS builder
+FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION} AS builder
 WORKDIR /go/src/github.com/docker/docker-scan
 
 # cache go vendoring
@@ -36,8 +36,11 @@ RUN --mount=target=. \
 # BUILD
 ####
 FROM builder AS build
-RUN --mount=target=. \
-    --mount=type=cache,target=/root/.cache/go-build \
+ARG TARGETOS
+ARG TARGETARCH
+RUN --mount=type=cache,target=/root/.cache/go-build \
+    GOOS=${TARGETOS} \
+    GOARCH=${TARGETARCH} \
     make -f builder.Makefile build
 
 ####
