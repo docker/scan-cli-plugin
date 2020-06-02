@@ -9,6 +9,7 @@ import (
 	"github.com/docker/cli/cli-plugins/plugin"
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/docker-scan/internal"
+	"github.com/docker/docker-scan/internal/provider"
 	"github.com/spf13/cobra"
 )
 
@@ -33,8 +34,9 @@ func newScanCmd(_ command.Cli) *cobra.Command {
 		Use:         "scan [OPTIONS] IMAGE",
 		Annotations: map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			scanProvider := provider.NewSnykProvider()
 			if showVersion {
-				version, err := internal.FullVersion()
+				version, err := internal.FullVersion(scanProvider)
 				if err != nil {
 					return err
 				}

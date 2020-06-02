@@ -1,10 +1,10 @@
 package internal
 
 import (
-	"bytes"
 	"fmt"
-	"os/exec"
 	"strings"
+
+	"github.com/docker/docker-scan/internal/provider"
 )
 
 var (
@@ -15,28 +15,16 @@ var (
 )
 
 // FullVersion return plugin version, git commit and the provider cli version
-func FullVersion() (string, error) {
-	provider, err := providerVersion()
+func FullVersion(scanProvider provider.Provider) (string, error) {
+	providerVersion, err := scanProvider.Version()
 	if err != nil {
 		return "", err
 	}
 	res := []string{
 		fmt.Sprintf("Version:    %s", Version),
 		fmt.Sprintf("Git commit: %s", GitCommit),
-		fmt.Sprintf("Provider:   %s", provider),
+		fmt.Sprintf("Provider:   %s", providerVersion),
 	}
 
 	return strings.Join(res, "\n"), nil
-}
-
-func providerVersion() (string, error) {
-	cmd := exec.Command("snyk", "--version")
-	buff := bytes.NewBuffer(nil)
-	buffErr := bytes.NewBuffer(nil)
-	cmd.Stdout = buff
-	cmd.Stderr = buffErr
-	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("fail to call Snyk: %s", buffErr.String())
-	}
-	return fmt.Sprintf("Snyk (%s)", strings.TrimSpace(buff.String())), nil
 }
