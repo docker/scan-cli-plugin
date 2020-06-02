@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	dockerConfigFile "github.com/docker/cli/cli/config/configfile"
-	"gotest.tools/icmd"
+	"gotest.tools/v3/icmd"
 )
 
 var (
