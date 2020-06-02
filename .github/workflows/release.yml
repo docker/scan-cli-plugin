@@ -1,20 +1,17 @@
-name: goreleaser
+name: release
 
 on:
   push:
     tags:
-      - '*'
+      - 'v*'
 
 jobs:
-  goreleaser:
+  release:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      
-      - name: Unshallow
-        run: git fetch --prune --unshallow
-    
+
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
@@ -23,11 +20,52 @@ jobs:
       - name: Build Cross
         run: make cross
 
-      - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v2
-        with:
-          version: latest
-          args: release
+      - name: Zip it
+        run: |
+          zip --junk-paths ./dist/docker-scan_darwin_amd64
+          zip --junk-paths ./dist/docker-scan_linux_amd64
+          zip --junk-paths ./dist/docker-scan_windows_amd64
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: true
+          prerelease: true
+
+      - name: Upload macOS plugin
+        id: upload-release-asset-macOS
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./docker-scan_darwin_amd64.zip
+          asset_name: docker-scan_darwin_amd64.zip
+          asset_content_type: application/octet-stream
+
+      - name: Upload linux plugin
+        id: upload-release-asset-linux
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./docker-scan_linux_amd64.zip
+          asset_name: docker-scan_linux_amd64.zip
+          asset_content_type: application/octet-stream
+
+      - name: Upload Windows plugin
+        id: upload-release-asset-windows
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./docker-scan_windows_amd64.zip
+          asset_name: docker-scan_windows_amd64.zip
+          asset_content_type: application/octet-stream
