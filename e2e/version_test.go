@@ -18,8 +18,9 @@ import (
 func TestVersionSnykUserBinary(t *testing.T) {
 	// Add user snyk binary to the $PATH
 	path := os.Getenv("PATH")
-	defer func() { os.Setenv("PATH", path) }()
-	os.Setenv("PATH", fmt.Sprintf("%s:%s", "/root/e2e", path))
+	defer func() { _ = os.Setenv("PATH", path) }()
+	err := os.Setenv("PATH", fmt.Sprintf("%s:%s", "/root/e2e", path))
+	assert.NilError(t, err)
 
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()

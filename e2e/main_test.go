@@ -21,14 +21,14 @@ type dockerCliCommand struct {
 	cliPluginDir string
 }
 
-type ConfigFileOperator func(configFile *dockerConfigFile.ConfigFile)
-
-func (d dockerCliCommand) createTestCmd(ops ...ConfigFileOperator) (icmd.Cmd, string, func()) {
+func (d dockerCliCommand) createTestCmd() (icmd.Cmd, string, func()) {
 	configDir, err := ioutil.TempDir("", "config")
 	if err != nil {
 		panic(err)
 	}
-	os.MkdirAll(filepath.Join(configDir, "scan"), 0644)
+	if err := os.MkdirAll(filepath.Join(configDir, "scan"), 0644); err != nil {
+		panic(err)
+	}
 	createSymLink("snyk", "/root/.docker/scan", filepath.Join(configDir, "scan"))
 
 	configFilePath := filepath.Join(configDir, "config.json")
@@ -37,9 +37,6 @@ func (d dockerCliCommand) createTestCmd(ops ...ConfigFileOperator) (icmd.Cmd, st
 			d.cliPluginDir,
 		},
 		Filename: configFilePath,
-	}
-	for _, op := range ops {
-		op(&config)
 	}
 	configFile, err := os.Create(configFilePath)
 	if err != nil {
