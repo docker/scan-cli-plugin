@@ -4,9 +4,9 @@ import (
 	"regexp"
 	"testing"
 
-	"gotest.tools/assert"
-	"gotest.tools/golden"
-	"gotest.tools/icmd"
+	"gotest.tools/v3/assert"
+	"gotest.tools/v3/golden"
+	"gotest.tools/v3/icmd"
 )
 
 func TestInvokePluginFromCLI(t *testing.T) {

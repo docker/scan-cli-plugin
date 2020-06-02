@@ -8,11 +8,10 @@ import (
 	"testing"
 
 	"github.com/docker/docker-scan/config"
+	"gotest.tools/v3/assert"
+	"gotest.tools/v3/icmd"
 
 	"github.com/docker/docker-scan/internal"
-
-	"gotest.tools/assert"
-	"gotest.tools/icmd"
 )
 
 func TestVersionSnykUserBinary(t *testing.T) {
