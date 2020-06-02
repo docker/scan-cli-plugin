@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
 
 	"github.com/docker/docker-scan/config"
 
@@ -27,13 +25,12 @@ func main() {
 
 func newScanCmd(_ command.Cli) *cobra.Command {
 	var (
-		auth        string
 		showVersion bool
 	)
 	cmd := &cobra.Command{
 		Short:       "Docker Scan",
 		Long:        `A tool to scan your docker image`,
-		Use:         "scan [OPTIONS] IMAGE",
+		Use:         "scan [OPTIONS]",
 		Annotations: map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conf, err := config.ReadConfigFile()
@@ -49,31 +46,12 @@ func newScanCmd(_ command.Cli) *cobra.Command {
 				fmt.Println(version)
 				return nil
 			}
-			if len(args) != 1 {
-				//nolint:golint
-				return fmt.Errorf(`"docker run" requires at least 1 argument.
-See 'docker scan --help'.`)
+			if err := cmd.Usage(); err != nil {
+				return err
 			}
-			if auth != "" {
-				fmt.Println("Authenticating to Snyk using", auth)
-				c := exec.Command("snyk", "auth", auth)
-				c.Stdin = os.Stdin
-				c.Stdout = os.Stdout
-				c.Stderr = os.Stderr
-				if err := c.Run(); err != nil {
-					return err
-				}
-				fmt.Println("Authenticated")
-				fmt.Println()
-			}
-			c := exec.Command("snyk", "test", "--docker", args[0])
-			c.Stdin = os.Stdin
-			c.Stdout = os.Stdout
-			c.Stderr = os.Stderr
-			return c.Run()
+			return nil
 		},
 	}
-	cmd.Flags().StringVar(&auth, "auth", "", "Use snyk API token to authenticate on snyk.io")
 	cmd.Flags().BoolVar(&showVersion, "version", false, "Display version of scan plugin and snyk cli")
 	return cmd
 }

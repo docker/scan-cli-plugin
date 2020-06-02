@@ -77,9 +77,9 @@ ARG SNYK_USER_VERSION=1.334.0
 RUN apk add -U --no-cache wget 
 # install snyk desktop binary
 WORKDIR /root
-RUN wget https://github.com/snyk/snyk/releases/download/v${SNYK_DESKTOP_VERSION}/snyk-linux -O snyk-desktop
+RUN wget https://github.com/snyk/snyk/releases/download/v${SNYK_DESKTOP_VERSION}/snyk-linux -nv -O snyk-desktop
 # install snyk user binary
-RUN wget https://github.com/snyk/snyk/releases/download/v${SNYK_USER_VERSION}/snyk-linux -O snyk-user
+RUN wget https://github.com/snyk/snyk/releases/download/v${SNYK_USER_VERSION}/snyk-linux -nv -O snyk-user
 
 ####
 # E2E
