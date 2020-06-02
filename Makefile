@@ -1,14 +1,21 @@
 export DOCKER_BUILDKIT=1
 
 NULL := /dev/null
+
+# Pinned Versions
 SNYK_DESKTOP_VERSION := 1.332.0
 SNYK_USER_VERSION := 1.334.0
 GO_VERSION := 1.14.3
 CLI_VERSION := 19.03.9
+ALPINE_VERSION := 3.12.0
+GOLANGCI_LINT_VERSION := v1.27.0-alpine
+
 BUILD_ARGS := --build-arg SNYK_DESKTOP_VERSION=$(SNYK_DESKTOP_VERSION)\
 	--build-arg SNYK_USER_VERSION=$(SNYK_USER_VERSION)\
 	--build-arg GO_VERSION=$(GO_VERSION)\
-	--build-arg CLI_VERSION=$(CLI_VERSION)
+	--build-arg CLI_VERSION=$(CLI_VERSION)\
+	--build-arg ALPINE_VERSION=$(ALPINE_VERSION)\
+	--build-arg GOLANGCI_LINT_VERSION=$(GOLANGCI_LINT_VERSION)
 
 ifeq ($(COMMIT),)
   COMMIT := $(shell git rev-parse --short HEAD 2> $(NULL))
@@ -64,6 +71,14 @@ e2e: e2e-build
 .PHONY: e2e-tests
 e2e-tests:
 	go test -ldflags=$(LDFLAGS) ./e2e
+
+.PHONY: lint
+lint: ## Run the go linter
+	@docker build . --target lint
+
+.PHONY: linter
+linter:
+	golangci-lint run --timeout 10m0s ./...
 
 help: ## Show help
 	@echo Please specify a build target. The choices are:
