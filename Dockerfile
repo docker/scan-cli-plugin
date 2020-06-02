@@ -97,5 +97,5 @@ RUN chmod +x /root/.docker/scan/snyk /root/e2e/snyk
 # install docker CLI
 COPY --from=cli /usr/local/bin/docker /usr/local/bin/docker
 # install docker-scan plugin
-COPY --from=cross-build /go/src/github.com/docker/docker-scan/dist/docker-scan_linux_amd64/docker-scan/docker-scan /root/.docker/cli-plugins/docker-scan
+COPY --from=cross-build /go/src/github.com/docker/docker-scan/dist/docker-scan_linux_amd64 /root/.docker/cli-plugins/docker-scan
 CMD ["make", "-f", "builder.Makefile", "e2e"]
