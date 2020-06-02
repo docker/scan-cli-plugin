@@ -30,7 +30,7 @@ COPY --from=lint-base /usr/bin/golangci-lint /usr/bin/golangci-lint
 RUN --mount=target=. \
     --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/root/.cache/golangci-lint \
-    make linter
+    make -f builder.Makefile lint
 
 ####
 # BUILD
@@ -38,7 +38,7 @@ RUN --mount=target=. \
 FROM builder AS build
 RUN --mount=target=. \
     --mount=type=cache,target=/root/.cache/go-build \
-    make build
+    make -f builder.Makefile build
 
 ####
 # SCAN
@@ -51,7 +51,7 @@ COPY --from=build /go/src/github.com/docker/docker-scan/bin/docker-scan /docker-
 ####
 FROM builder AS cross-build
 RUN --mount=type=cache,target=/root/.cache/go-build \
-    make dist
+    make -f builder.Makefile cross
 
 ####
 # CROSS
@@ -95,4 +95,4 @@ RUN chmod +x /root/.docker/scan/snyk /root/e2e/snyk
 COPY --from=cli /usr/local/bin/docker /usr/local/bin/docker
 # install docker-scan plugin
 COPY --from=cross-build /go/src/github.com/docker/docker-scan/dist/docker-scan_linux_amd64/docker-scan/docker-scan /root/.docker/cli-plugins/docker-scan
-CMD ["make", "e2e-tests"]
+CMD ["make", "-f", "builder.Makefile", "e2e"]
