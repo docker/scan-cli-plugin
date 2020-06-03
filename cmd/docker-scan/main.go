@@ -30,7 +30,7 @@ func newScanCmd(_ command.Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Short:       "Docker Scan",
 		Long:        `A tool to scan your docker image`,
-		Use:         "scan [OPTIONS]",
+		Use:         "scan [OPTIONS] IMAGE",
 		Annotations: map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conf, err := config.ReadConfigFile()
@@ -46,9 +46,12 @@ func newScanCmd(_ command.Cli) *cobra.Command {
 				fmt.Println(version)
 				return nil
 			}
-			if err := cmd.Usage(); err != nil {
-				return err
+
+			if len(args) != 1 {
+				cmd.Usage()
+				return fmt.Errorf(`"docker scan" requires exactly 1 argument`)
 			}
+
 			return nil
 		},
 	}
