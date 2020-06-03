@@ -1,5 +1,5 @@
 
-Usage:	docker scan [OPTIONS]
+Usage:	docker scan [OPTIONS] IMAGE
 
 A tool to scan your docker image
 

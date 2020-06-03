@@ -27,8 +27,7 @@ FROM golangci/golangci-lint:${GOLANGCI_LINT_VERSION} AS lint-base
 FROM builder AS lint
 ENV CGO_ENABLED=0
 COPY --from=lint-base /usr/bin/golangci-lint /usr/bin/golangci-lint
-RUN --mount=target=. \
-    --mount=type=cache,target=/root/.cache/go-build \
+RUN --mount=type=cache,target=/root/.cache/go-build \
     --mount=type=cache,target=/root/.cache/golangci-lint \
     make -f builder.Makefile lint
 

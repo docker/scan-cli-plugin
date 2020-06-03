@@ -15,6 +15,10 @@ func (s *providerStub) Version() (string, error) {
 	return s.version, nil
 }
 
+func (s *providerStub) Scan(image string) error {
+	return nil
+}
+
 func TestFullVersion(t *testing.T) {
 	stub := &providerStub{version: "stub-version"}
 	actual, err := FullVersion(stub)
