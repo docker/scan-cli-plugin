@@ -23,7 +23,7 @@ func main() {
 	})
 }
 
-func newScanCmd(_ command.Cli) *cobra.Command {
+func newScanCmd(dockerCli command.Cli) *cobra.Command {
 	var (
 		showVersion bool
 	)
@@ -37,7 +37,7 @@ func newScanCmd(_ command.Cli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			scanProvider := provider.NewSnykProvider(conf.Path)
+			scanProvider := provider.NewSnykProvider(conf.Path, dockerCli.ConfigFile().AuthConfigs)
 			if showVersion {
 				version, err := internal.FullVersion(scanProvider)
 				if err != nil {
@@ -48,8 +48,18 @@ func newScanCmd(_ command.Cli) *cobra.Command {
 			}
 
 			if len(args) != 1 {
-				cmd.Usage()
+				if err = cmd.Usage(); err != nil {
+					return err
+				}
 				return fmt.Errorf(`"docker scan" requires exactly 1 argument`)
+			}
+
+			if err = scanProvider.Scan(args[0]); err != nil {
+				if provider.IsAuthenticationError(err) {
+					return fmt.Errorf(`You need to be logged in to Docker Hub to use scan feature.
+please login to Docker Hub using the Docker Login command`)
+				}
+				return err
 			}
 
 			return nil
