@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -19,9 +18,7 @@ func TestScanFailsNoAuthentication(t *testing.T) {
 	// create Snyk config file with empty token
 	homeDir := createSnykConfFile(t, "")
 	defer homeDir.Remove()
-	home := os.Getenv("HOME")
-	assert.NilError(t, os.Setenv("HOME", homeDir.Path()))
-	defer func() { _ = os.Setenv("HOME", home) }()
+	defer overloadEnvVariable(t, "HOME", homeDir.Path()) ()
 
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
@@ -64,9 +61,7 @@ func TestScanSucceedWithSnyk(t *testing.T) {
 	// create Snyk config file with empty token
 	homeDir := createSnykConfFile(t, "valid-token")
 	defer homeDir.Remove()
-	home := os.Getenv("HOME")
-	assert.NilError(t, os.Setenv("HOME", homeDir.Path()))
-	defer func() { _ = os.Setenv("HOME", home) }()
+	defer overloadEnvVariable(t, "HOME", homeDir.Path()) ()
 
 	cmd, _, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
