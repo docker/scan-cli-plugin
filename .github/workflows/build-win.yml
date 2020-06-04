@@ -1,0 +1,51 @@
+name: Build Windows PR
+on: [push]
+jobs:
+  build:
+    name: Build
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      GO111MODULE: "on"
+    steps:
+      - name: Docker version
+        run: |
+          docker version
+      - name: Set up Go 1.14
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+        id: go
+      - name: Checkout code into the Go module directory
+        uses: actions/checkout@v2
+      - uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Download binaries
+        run: |
+          curl https://github.com/snyk/snyk/releases/download/v1.334.0/snyk-win.exe -L -s -S -o snyk-user.exe
+          mkdir -p docker-config/snyk-user
+          mv ./snyk-user.exe docker-config/snyk-user/snyk.exe
+          curl https://github.com/snyk/snyk/releases/download/v1.332.0/snyk-win.exe -L -s -S -o snyk-desktop.exe
+          mkdir -p docker-config/snyk-desktop
+          mv ./snyk-desktop.exe docker-config/snyk-desktop/snyk.exe
+          go get gotest.tools/gotestsum@v0.4.2
+      - name: Build binary and run e2e tests
+        env:
+          E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
+        run: |
+          source vars.mk
+          export DOCKER_CONFIG=$(pwd -W)/docker-config
+          export SNYK_USER_PATH=$(pwd -W)/docker-config/snyk-user
+          export SNYK_DESKTOP_PATH=$(pwd -W)/docker-config/snyk-desktop
+          mkdir -p docker-config/scan
+          mkdir -p docker-config/cli-plugins
+          make -f builder.Makefile build
+          cp ./bin/docker-scan.exe docker-config/cli-plugins/docker-scan.exe
+          echo "{\"path\":\"$(pwd -W)/docker-config/snyk-desktop/snyk.exe\"}" > ./docker-config/scan/config.json
+          make -f builder.Makefile test-unit e2e

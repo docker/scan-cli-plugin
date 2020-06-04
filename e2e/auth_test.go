@@ -15,14 +15,11 @@ import (
 func TestSnykAuthentication(t *testing.T) {
 	// Add snyk binary to the path
 	path := os.Getenv("PATH")
-	defer env.Patch(t, "PATH", fmt.Sprintf("%s:%s", "/root/e2e", path))()
+	defer env.Patch(t, "PATH", fmt.Sprintf(pathFormat(), os.Getenv("SNYK_USER_PATH"), path))()
 
 	// create Snyk config file with empty token
-	homeDir := createSnykConfFile(t, "")
-	defer homeDir.Remove()
-	home := os.Getenv("HOME")
-	assert.NilError(t, os.Setenv("HOME", homeDir.Path()))
-	defer func() { _ = os.Setenv("HOME", home) }()
+	homeDir, cleanFunction := createSnykConfFile(t, "")
+	defer cleanFunction()
 
 	cmd, _, cleanup := dockerCli.createTestCmd()
 	defer cleanup()

@@ -99,6 +99,8 @@ func (s *snykProvider) Version() (string, error) {
 		if err == exec.ErrNotFound {
 			// Could not find Snyk in $PATH
 			return "", fmt.Errorf("could not find Snyk binary")
+		} else if _, ok := err.(*exec.Error); ok {
+			return "", fmt.Errorf("could not find Snyk binary")
 		} else if _, ok := err.(*os.PathError); ok {
 			// The specified path for Snyk binary does not exist
 			return "", fmt.Errorf("could not find Snyk binary")

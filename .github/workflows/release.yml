@@ -11,6 +11,12 @@ jobs:
     env:
       E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
     steps:
+      - name: Docker info
+        run: docker info
+
+      - name: Docker version
+        run: docker version
+
       - name: TagName
         uses: olegtarasov/get-tag@v2
 

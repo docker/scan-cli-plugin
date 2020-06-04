@@ -1,10 +1,8 @@
 package e2e
 
 import (
-	"regexp"
 	"testing"
 
-	"gotest.tools/v3/assert"
 	"gotest.tools/v3/golden"
 	"gotest.tools/v3/icmd"
 )
@@ -24,10 +22,4 @@ func TestInvokePluginFromCLI(t *testing.T) {
 
 	goldenFile := "plugin-usage.golden"
 	golden.Assert(t, usage, goldenFile)
-
-	// docker info should print scan version and short description
-	cmd.Command = dockerCli.Command("info")
-	re := regexp.MustCompile(`scan: Docker Scan \(Docker Inc\., .*\)`)
-	output := icmd.RunCmd(cmd).Assert(t, icmd.Success).Combined()
-	assert.Assert(t, re.MatchString(output))
 }

@@ -8,14 +8,19 @@ ifeq ($(TAG_NAME),)
   TAG_NAME := $(shell git describe --always --dirty --abbrev=10 2> $(NULL))
 endif
 
+GOOS ?= $(shell go env GOOS)
+
 PKG_NAME=github.com/docker/docker-scan
 STATIC_FLAGS= CGO_ENABLED=0
 LDFLAGS := "-s -w \
   -X $(PKG_NAME)/internal.GitCommit=$(COMMIT) \
   -X $(PKG_NAME)/internal.Version=$(TAG_NAME)"
-
+VARS:= SNYK_DESKTOP_VERSION=1.332.0 SNYK_USER_VERSION=1.334.0
 GO_BUILD = $(STATIC_FLAGS) go build -trimpath -ldflags=$(LDFLAGS)
-BINARY=docker-scan
+BINARY:=docker-scan
+ifeq ($(GOOS),windows)
+	BINARY=docker-scan.exe
+endif
 
 .PHONY: lint
 lint:
@@ -23,7 +28,7 @@ lint:
 
 .PHONY: e2e
 e2e:
-	gotestsum ./e2e -- -ldflags=$(LDFLAGS)
+	$(VARS) gotestsum ./e2e -- -ldflags=$(LDFLAGS)
 
 .PHONY: test-unit
 test-unit:
