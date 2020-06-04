@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	dockerConfigFile "github.com/docker/cli/cli/config/configfile"
-	"gotest.tools/v3/assert"
 	"gotest.tools/v3/icmd"
 )
 
@@ -84,11 +83,4 @@ func createSymLink(binaryName, sourceDir, configDir string) {
 	if err := os.Symlink(filepath.Join(sourceDir, binaryName), filepath.Join(configDir, binaryName)); err != nil {
 		panic(err)
 	}
-}
-
-func overloadEnvVariable(t *testing.T, envVar string, value string) func() {
-	initialValue := os.Getenv(envVar)
-	err := os.Setenv(envVar, value)
-	assert.NilError(t, err)
-	return  func() { _ = os.Setenv(envVar, initialValue) }
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/docker/cli/cli/config/configfile"
 	"github.com/docker/cli/cli/config/types"
 	"gotest.tools/v3/assert"
+	"gotest.tools/v3/env"
 	"gotest.tools/v3/fs"
 	"gotest.tools/v3/icmd"
 )
@@ -18,7 +19,7 @@ func TestScanFailsNoAuthentication(t *testing.T) {
 	// create Snyk config file with empty token
 	homeDir := createSnykConfFile(t, "")
 	defer homeDir.Remove()
-	defer overloadEnvVariable(t, "HOME", homeDir.Path()) ()
+	defer env.Patch(t, "HOME", homeDir.Path())()
 
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
@@ -61,7 +62,7 @@ func TestScanSucceedWithSnyk(t *testing.T) {
 	// create Snyk config file with empty token
 	homeDir := createSnykConfFile(t, "valid-token")
 	defer homeDir.Remove()
-	defer overloadEnvVariable(t, "HOME", homeDir.Path()) ()
+	defer env.Patch(t, "HOME", homeDir.Path())()
 
 	cmd, _, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
