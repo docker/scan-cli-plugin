@@ -26,6 +26,7 @@ require (
 	github.com/docker/libtrust v0.0.0-20160708172513-aabc10ec26b7 // indirect
 	github.com/go-sql-driver/mysql v1.5.0 // indirect
 	github.com/gofrs/uuid v3.3.0+incompatible // indirect
+	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.4 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/jinzhu/gorm v1.9.12 // indirect
