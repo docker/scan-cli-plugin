@@ -48,5 +48,8 @@ jobs:
       - name: Build Cross
         run: make cross
 
-      - name: Tests
+      - name: Unit Tests
+        run: make test-unit
+
+      - name: End-to-end Tests
         run: make e2e

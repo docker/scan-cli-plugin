@@ -64,6 +64,28 @@ FROM scratch AS cross
 COPY --from=cross-build /go/src/github.com/docker/docker-scan/dist /
 
 ####
+# GOTESTSUM
+####
+FROM alpine:${ALPINE_VERSION} AS gotestsum
+ARG GOTESTSUM_VERSION=0.4.2
+
+RUN apk add -U --no-cache wget tar 
+# install gotestsum
+WORKDIR /root
+RUN wget https://github.com/gotestyourself/gotestsum/releases/download/v${GOTESTSUM_VERSION}/gotestsum_${GOTESTSUM_VERSION}_linux_amd64.tar.gz -nv -O - | tar -xz
+
+####
+# TEST-UNIT
+####
+FROM builder AS test-unit
+ARG TAG_NAME
+ENV TAG_NAME=$TAG_NAME
+
+# install docker-scan plugin
+COPY --from=gotestsum /root/gotestsum /usr/local/bin/gotestsum
+CMD ["make", "-f", "builder.Makefile", "test-unit"]
+
+####
 # CLI
 ####
 FROM docker:${CLI_VERSION} AS cli
@@ -96,6 +118,7 @@ ENV TAG_NAME=$TAG_NAME
 # install snyk binaries
 COPY --from=snyk /root/snyk-desktop /root/.docker/scan/snyk
 COPY --from=snyk /root/snyk-user /root/e2e/snyk
+COPY --from=gotestsum /root/gotestsum /usr/local/bin/gotestsum
 RUN chmod +x /root/.docker/scan/snyk /root/e2e/snyk
 # install docker CLI
 COPY --from=cli /usr/local/bin/docker /usr/local/bin/docker

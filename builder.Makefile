@@ -23,7 +23,11 @@ lint:
 
 .PHONY: e2e
 e2e:
-	go test -ldflags=$(LDFLAGS) ./e2e
+	gotestsum ./e2e -- -ldflags=$(LDFLAGS)
+
+.PHONY: test-unit
+test-unit:
+	gotestsum $(shell go list ./... | grep -vE '/e2e')
 
 cross:
 	GOOS=linux   GOARCH=amd64 $(GO_BUILD) -o dist/docker-scan_linux_amd64 ./cmd/docker-scan
