@@ -28,6 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       GO111MODULE: "on"
+      E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
     steps:
       - name: Set up Go 1.14
         uses: actions/setup-go@v1
