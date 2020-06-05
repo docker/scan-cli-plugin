@@ -2,6 +2,7 @@ package provider
 
 // Provider abstracts a scan provider
 type Provider interface {
-	Version() (string, error)
+	Authenticate(token string) error
 	Scan(image string) error
+	Version() (string, error)
 }

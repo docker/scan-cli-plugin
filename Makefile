@@ -42,7 +42,7 @@ e2e-build:
 
 .PHONY: e2e
 e2e: e2e-build ## Run the end-to-end tests
-	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock docker-scan:e2e
+	@docker run --env E2E_TEST_AUTH_TOKEN=$(E2E_TEST_AUTH_TOKEN) --rm -v /var/run/docker.sock:/var/run/docker.sock docker-scan:e2e
 
 test-unit-build:
 	docker build $(BUILD_ARGS) . --target test-unit -t docker-scan:test-unit

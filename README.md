@@ -85,3 +85,13 @@ Licenses:          enabled
 
 Note that we do not currently have vulnerability data for your image.
 ```
+
+## Run end-to-end tests
+
+You need to get a valid Snyk token and put it in the `E2E_TEST_AUTH_TOKEN` env variable.
+
+```console
+$ E2E_TEST_AUTH_TOKEN=XXXXXX make e2e
+```
+
+:warning: If you want the github actions to run on your fork, you need to define a new Github secret `E2E_TEST_AUTH_TOKEN` with your Snyk token.

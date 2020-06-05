@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/docker/cli/cli/config/types"
+	"github.com/google/uuid"
 	"github.com/mitchellh/go-homedir"
 )
 
@@ -33,23 +34,16 @@ func NewSnykProvider(path string, authsConfig map[string]types.AuthConfig) Provi
 	return &snykProvider{path, authsConfig}
 }
 
-func (s *snykProvider) Version() (string, error) {
-	cmd := exec.Command(s.path, "--version")
-	buff := bytes.NewBuffer(nil)
-	buffErr := bytes.NewBuffer(nil)
-	cmd.Stdout = buff
-	cmd.Stderr = buffErr
-	if err := cmd.Run(); err != nil {
-		if err == exec.ErrNotFound {
-			// Could not find Snyk in $PATH
-			return "", fmt.Errorf("could not find Snyk binary")
-		} else if _, ok := err.(*os.PathError); ok {
-			// The specified path for Snyk binary does not exist
-			return "", fmt.Errorf("could not find Snyk binary")
+func (s *snykProvider) Authenticate(token string) error {
+	if token != "" {
+		if _, err := uuid.Parse(token); err != nil {
+			return &invalidTokenError{token}
 		}
-		return "", fmt.Errorf("fail to call Snyk: %s %s", err, buffErr.String())
 	}
-	return fmt.Sprintf("Snyk (%s)", strings.TrimSpace(buff.String())), nil
+	cmd := exec.Command(s.path, "auth", token)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 func (s *snykProvider) Scan(image string) error {
@@ -93,4 +87,23 @@ func isAuthenticatedOnSnyk() (bool, error) {
 	}
 
 	return config.API != "", nil
+}
+
+func (s *snykProvider) Version() (string, error) {
+	cmd := exec.Command(s.path, "--version")
+	buff := bytes.NewBuffer(nil)
+	buffErr := bytes.NewBuffer(nil)
+	cmd.Stdout = buff
+	cmd.Stderr = buffErr
+	if err := cmd.Run(); err != nil {
+		if err == exec.ErrNotFound {
+			// Could not find Snyk in $PATH
+			return "", fmt.Errorf("could not find Snyk binary")
+		} else if _, ok := err.(*os.PathError); ok {
+			// The specified path for Snyk binary does not exist
+			return "", fmt.Errorf("could not find Snyk binary")
+		}
+		return "", fmt.Errorf("fail to call Snyk: %s %s", err, buffErr.String())
+	}
+	return fmt.Sprintf("Snyk (%s)", strings.TrimSpace(buff.String())), nil
 }
