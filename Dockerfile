@@ -52,6 +52,8 @@ COPY --from=build /go/src/github.com/docker/docker-scan/bin/docker-scan /docker-
 # CROSS_BUILD
 ####
 FROM builder AS cross-build
+ARG TAG_NAME
+ENV TAG_NAME=$TAG_NAME
 RUN --mount=type=cache,target=/root/.cache/go-build \
     make -f builder.Makefile cross
 
@@ -88,6 +90,8 @@ ARG SNYK_DESKTOP_VERSION=1.332.0
 ENV SNYK_DESKTOP_VERSION=${SNYK_DESKTOP_VERSION}
 ARG SNYK_USER_VERSION=1.334.0
 ENV SNYK_USER_VERSION=${SNYK_USER_VERSION}
+ARG TAG_NAME
+ENV TAG_NAME=$TAG_NAME
 
 # install snyk binaries
 COPY --from=snyk /root/snyk-desktop /root/.docker/scan/snyk

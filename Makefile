@@ -13,7 +13,8 @@ BUILD_ARGS := --build-arg SNYK_DESKTOP_VERSION=$(SNYK_DESKTOP_VERSION)\
 	--build-arg GO_VERSION=$(GO_VERSION)\
 	--build-arg CLI_VERSION=$(CLI_VERSION)\
 	--build-arg ALPINE_VERSION=$(ALPINE_VERSION)\
-	--build-arg GOLANGCI_LINT_VERSION=$(GOLANGCI_LINT_VERSION)
+	--build-arg GOLANGCI_LINT_VERSION=$(GOLANGCI_LINT_VERSION) \
+	--build-arg TAG_NAME=$(GIT_TAG_NAME)
 
 .PHONY: build
 build: ## Build docker-scan in a container
