@@ -9,6 +9,7 @@ import (
 
 	"github.com/docker/docker-scan/config"
 	"gotest.tools/v3/assert"
+	"gotest.tools/v3/env"
 	"gotest.tools/v3/icmd"
 
 	"github.com/docker/docker-scan/internal"
@@ -17,7 +18,7 @@ import (
 func TestVersionSnykUserBinary(t *testing.T) {
 	// Add user snyk binary to the $PATH
 	path := os.Getenv("PATH")
-	defer overloadEnvVariable(t, "PATH", fmt.Sprintf("%s:%s", "/root/e2e", path))()
+	defer env.Patch(t, "PATH", fmt.Sprintf("%s:%s", "/root/e2e", path))()
 
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
