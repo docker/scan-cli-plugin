@@ -33,6 +33,9 @@ cross: ## Cross compile docker-scan binaries in a container
 install: build ## Install docker-scan to your local cli-plugins directory
 	cp bin/docker-scan ~/.docker/cli-plugins
 
+.PHONY: test ## Run unit tests then end-to-end tests
+test: test-unit e2e
+
 .PHONY: e2e-build
 e2e-build:
 	docker build $(BUILD_ARGS) . --target e2e -t docker-scan:e2e
@@ -40,6 +43,12 @@ e2e-build:
 .PHONY: e2e
 e2e: e2e-build ## Run the end-to-end tests
 	docker run --rm -v /var/run/docker.sock:/var/run/docker.sock docker-scan:e2e
+
+test-unit-build:
+	docker build $(BUILD_ARGS) . --target test-unit -t docker-scan:test-unit
+
+test-unit: test-unit-build ## Run unit tests
+	docker run --rm docker-scan:test-unit
 
 .PHONY: lint
 lint: ## Run the go linter
