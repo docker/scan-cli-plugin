@@ -30,6 +30,12 @@ jobs:
       GO111MODULE: "on"
       E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
     steps:
+      - name: Docker info
+        run: docker info
+
+      - name: Docker version
+        run: docker version
+
       - name: Set up Go 1.14
         uses: actions/setup-go@v1
         with:

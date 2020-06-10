@@ -69,7 +69,7 @@ COPY --from=cross-build /go/src/github.com/docker/docker-scan/dist /
 FROM alpine:${ALPINE_VERSION} AS gotestsum
 ARG GOTESTSUM_VERSION=0.4.2
 
-RUN apk add -U --no-cache wget tar 
+RUN apk add -U --no-cache wget tar
 # install gotestsum
 WORKDIR /root
 RUN wget https://github.com/gotestyourself/gotestsum/releases/download/v${GOTESTSUM_VERSION}/gotestsum_${GOTESTSUM_VERSION}_linux_amd64.tar.gz -nv -O - | tar -xz
@@ -97,7 +97,7 @@ FROM alpine:${ALPINE_VERSION} AS snyk
 ARG SNYK_DESKTOP_VERSION=1.332.0
 ARG SNYK_USER_VERSION=1.334.0
 
-RUN apk add -U --no-cache wget 
+RUN apk add -U --no-cache wget
 # install snyk desktop binary
 WORKDIR /root
 RUN wget https://github.com/snyk/snyk/releases/download/v${SNYK_DESKTOP_VERSION}/snyk-linux -nv -O snyk-desktop
@@ -114,14 +114,18 @@ ARG SNYK_USER_VERSION=1.334.0
 ENV SNYK_USER_VERSION=${SNYK_USER_VERSION}
 ARG TAG_NAME
 ENV TAG_NAME=$TAG_NAME
+ENV SNYK_USER_PATH="/root/e2e"
+ENV SNYK_DESKTOP_PATH="/root/.docker/scan"
+ENV DOCKER_CONFIG="/root/.docker"
 
 # install snyk binaries
-COPY --from=snyk /root/snyk-desktop /root/.docker/scan/snyk
-COPY --from=snyk /root/snyk-user /root/e2e/snyk
+COPY --from=snyk /root/snyk-desktop ${DOCKER_CONFIG}/scan/snyk
+COPY --from=snyk /root/snyk-user $SNYK_USER_PATH/snyk
+RUN chmod +x ${DOCKER_CONFIG}/scan/snyk $SNYK_USER_PATH/snyk
 COPY --from=gotestsum /root/gotestsum /usr/local/bin/gotestsum
-RUN chmod +x /root/.docker/scan/snyk /root/e2e/snyk
 # install docker CLI
 COPY --from=cli /usr/local/bin/docker /usr/local/bin/docker
 # install docker-scan plugin
-COPY --from=cross-build /go/src/github.com/docker/docker-scan/dist/docker-scan_linux_amd64 /root/.docker/cli-plugins/docker-scan
+COPY --from=cross-build /go/src/github.com/docker/docker-scan/dist/docker-scan_linux_amd64 ${DOCKER_CONFIG}/cli-plugins/docker-scan
+RUN chmod +x ${DOCKER_CONFIG}/cli-plugins/docker-scan
 CMD ["make", "-f", "builder.Makefile", "e2e"]

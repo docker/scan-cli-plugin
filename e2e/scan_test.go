@@ -17,9 +17,8 @@ import (
 
 func TestScanFailsNoAuthentication(t *testing.T) {
 	// create Snyk config file with empty token
-	homeDir := createSnykConfFile(t, "")
-	defer homeDir.Remove()
-	defer env.Patch(t, "HOME", homeDir.Path())()
+	_, cleanFunction := createSnykConfFile(t, "")
+	defer cleanFunction()
 
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
@@ -36,6 +35,10 @@ please login to Docker Hub using the Docker Login command`,
 }
 
 func TestScanFailsWithCleanMessage(t *testing.T) {
+	// create Snyk config file with empty token
+	_, cleanFunction := createSnykConfFile(t, "")
+	defer cleanFunction()
+
 	cmd, _, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
 
@@ -60,9 +63,8 @@ func TestScanSucceedWithDockerHub(t *testing.T) {
 
 func TestScanSucceedWithSnyk(t *testing.T) {
 	// create Snyk config file with empty token
-	homeDir := createSnykConfFile(t, "valid-token")
-	defer homeDir.Remove()
-	defer env.Patch(t, "HOME", homeDir.Path())()
+	_, cleanFunction := createSnykConfFile(t, "valid-token")
+	defer cleanFunction()
 
 	cmd, _, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
@@ -71,12 +73,21 @@ func TestScanSucceedWithSnyk(t *testing.T) {
 	icmd.RunCmd(cmd).Assert(t, icmd.Success)
 }
 
-func createSnykConfFile(t *testing.T, token string) *fs.Dir {
+func createSnykConfFile(t *testing.T, token string) (*fs.Dir, func()) {
 	content := fmt.Sprintf(`{"api" : "%s"}`, token)
-	return fs.NewDir(t, t.Name(),
+	homeDir := fs.NewDir(t, t.Name(),
 		fs.WithDir(".config",
 			fs.WithDir("configstore",
 				fs.WithFile("snyk.json", content))))
+	homeFunc := env.Patch(t, "HOME", homeDir.Path())
+	userProfileFunc := env.Patch(t, "USERPROFILE", homeDir.Path())
+	cleanup := func() {
+		userProfileFunc()
+		homeFunc()
+		homeDir.Remove()
+	}
+
+	return homeDir, cleanup
 }
 
 func patchConfig(t *testing.T, configDir string, url string) {

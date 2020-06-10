@@ -29,7 +29,8 @@ func (d dockerCliCommand) createTestCmd() (icmd.Cmd, string, func()) {
 	if err := os.MkdirAll(filepath.Join(configDir, "scan"), 0644); err != nil {
 		panic(err)
 	}
-	createSymLink("snyk", "/root/.docker/scan", filepath.Join(configDir, "scan"))
+	sourceDir := os.Getenv("SNYK_DESKTOP_PATH")
+	copyBinary("snyk", sourceDir, filepath.Join(configDir, "scan"))
 
 	configFilePath := filepath.Join(configDir, "config.json")
 	config := dockerConfigFile.ConfigFile{
@@ -62,25 +63,39 @@ func (d dockerCliCommand) Command(args ...string) []string {
 }
 
 func TestMain(m *testing.M) {
-	// Prepare docker cli to call the docker-app plugin binary:
-	// - Create a symbolic link with the dockerApp binary to the plugin directory
+	// Prepare docker cli to call the docker-scan plugin binary:
+	// - Create a symbolic link with the docker-scan binary to the plugin directory
 	cliPluginDir, err := ioutil.TempDir("", "configContent")
 	if err != nil {
 		panic(err)
 	}
 	//nolint:errcheck
 	defer os.RemoveAll(cliPluginDir)
-	createSymLink("docker-scan", "/root/.docker/cli-plugins", cliPluginDir)
+	sourceDir := filepath.Join(os.Getenv("DOCKER_CONFIG"), "cli-plugins")
+	copyBinary("docker-scan", sourceDir, cliPluginDir)
 
 	dockerCli = dockerCliCommand{path: "docker", cliPluginDir: cliPluginDir}
 	os.Exit(m.Run())
 }
 
-func createSymLink(binaryName, sourceDir, configDir string) {
+func copyBinary(binaryName, sourceDir, configDir string) {
 	if runtime.GOOS == "windows" {
 		binaryName += ".exe"
 	}
-	if err := os.Symlink(filepath.Join(sourceDir, binaryName), filepath.Join(configDir, binaryName)); err != nil {
+	input, err := ioutil.ReadFile(filepath.Join(sourceDir, binaryName))
+	if err != nil {
 		panic(err)
 	}
+	err = ioutil.WriteFile(filepath.Join(configDir, binaryName), input, 0744)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func pathFormat() string {
+	pathFormat := "%s:%s"
+	if runtime.GOOS == "windows" {
+		pathFormat = "%s;%s"
+	}
+	return pathFormat
 }
