@@ -1,13 +1,10 @@
 package e2e
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"testing"
 
-	"github.com/docker/docker-scan/config"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/env"
 	"gotest.tools/v3/icmd"
@@ -23,12 +20,7 @@ func TestVersionSnykUserBinary(t *testing.T) {
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
 
-	// Create a config file pointing to desktop snyk binary
-	conf := config.Config{Path: fmt.Sprintf("%s/scan/snyk", configDir)}
-	buf, err := json.MarshalIndent(conf, "", "  ")
-	assert.NilError(t, err)
-	err = ioutil.WriteFile(fmt.Sprintf("%s/scan/config.json", configDir), buf, 0644)
-	assert.NilError(t, err)
+	createScanConfigFile(t, configDir)
 
 	// docker scan --version should use user's Snyk binary
 	cmd.Command = dockerCli.Command("scan", "--version")
@@ -46,12 +38,7 @@ func TestVersionSnykDesktopBinary(t *testing.T) {
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
 
-	// Create a config file pointing to desktop snyk binary
-	conf := config.Config{Path: fmt.Sprintf("%s/scan/snyk", configDir)}
-	buf, err := json.MarshalIndent(conf, "", "  ")
-	assert.NilError(t, err)
-	err = ioutil.WriteFile(fmt.Sprintf("%s/scan/config.json", configDir), buf, 0644)
-	assert.NilError(t, err)
+	createScanConfigFile(t, configDir)
 
 	// docker scan --version should print docker scan plugin version and snyk version
 	cmd.Command = dockerCli.Command("scan", "--version")

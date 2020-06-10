@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 
 	"github.com/docker/docker-scan/config"
 
@@ -14,7 +16,6 @@ import (
 )
 
 func main() {
-
 	plugin.Run(func(dockerCli command.Cli) *cobra.Command {
 		cmd := newScanCmd(dockerCli)
 		originalPreRun := cmd.PersistentPreRunE
@@ -79,15 +80,15 @@ func newScanCmd(dockerCli command.Cli) *cobra.Command {
 				return fmt.Errorf(`"docker scan" requires exactly 1 argument`)
 			}
 
-			if err = scanProvider.Scan(args[0]); err != nil {
-				if provider.IsAuthenticationError(err) {
-					return fmt.Errorf(`You need to be logged in to Docker Hub to use scan feature.
+			err = scanProvider.Scan(args[0])
+			if provider.IsAuthenticationError(err) {
+				return fmt.Errorf(`You need to be logged in to Docker Hub to use scan feature.
 please login to Docker Hub using the Docker Login command`)
-				}
-				return err
 			}
-
-			return nil
+			if exitError, ok := err.(*exec.ExitError); ok {
+				os.Exit(exitError.ExitCode())
+			}
+			return err
 		},
 	}
 	cmd.Flags().BoolVar(&authenticate, "auth", false, "Authenticate to the scan provider using an optional token, or web base token if empty")
