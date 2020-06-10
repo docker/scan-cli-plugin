@@ -1,0 +1,57 @@
+name: Build MacOS PR
+on: [push]
+jobs:
+  build:
+    name: Build
+    runs-on: macos-latest
+    env:
+      GO111MODULE: "on"
+    steps:
+      - name: Install Docker CLI
+        # Only the CLI is needed to run docker-scan e2e
+        run: brew install docker
+      - name: Docker version
+        run: |
+          docker --version
+      - name: Set up Go 1.14
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+        id: go
+      - name: Checkout code into the Go module directory
+        uses: actions/checkout@v2
+      - uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Download binaries
+        run: |
+          #Snyk user binary
+          curl https://github.com/snyk/snyk/releases/download/v1.334.0/snyk-macos -L -s -S -o snyk-user
+          mkdir -p docker-config/snyk-user
+          mv ./snyk-user docker-config/snyk-user/snyk
+          chmod +x docker-config/snyk-user/snyk
+
+          #Snyk desktop binary
+          curl https://github.com/snyk/snyk/releases/download/v1.332.0/snyk-macos -L -s -S -o snyk-desktop
+          mkdir -p docker-config/snyk-desktop
+          mv ./snyk-desktop docker-config/snyk-desktop/snyk
+          chmod +x docker-config/snyk-desktop/snyk
+
+          go get gotest.tools/gotestsum@v0.4.2
+      - name: Build binary and run e2e tests
+        env:
+          E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
+        run: |
+          source vars.mk
+          export DOCKER_CONFIG=$(pwd)/docker-config
+          export SNYK_USER_PATH=$(pwd)/docker-config/snyk-user
+          export SNYK_DESKTOP_PATH=$(pwd)/docker-config/snyk-desktop
+          mkdir -p docker-config/scan
+          mkdir -p docker-config/cli-plugins
+          make -f builder.Makefile build
+          cp ./bin/docker-scan docker-config/cli-plugins/docker-scan
+          echo "{\"path\":\"$(pwd)/docker-config/snyk-desktop/snyk\"}" > ./docker-config/scan/config.json
+          make -f builder.Makefile test-unit e2e

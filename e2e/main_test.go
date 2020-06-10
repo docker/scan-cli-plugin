@@ -26,7 +26,7 @@ func (d dockerCliCommand) createTestCmd() (icmd.Cmd, string, func()) {
 	if err != nil {
 		panic(err)
 	}
-	if err := os.MkdirAll(filepath.Join(configDir, "scan"), 0644); err != nil {
+	if err := os.MkdirAll(filepath.Join(configDir, "scan"), 0744); err != nil {
 		panic(err)
 	}
 	sourceDir := os.Getenv("SNYK_DESKTOP_PATH")
