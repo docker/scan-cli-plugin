@@ -53,7 +53,10 @@ func (s *snykProvider) Scan(image string) error {
 		}
 		return &authenticationError{}
 	}
-	return nil
+	cmd := exec.Command(s.path, "test", "--docker", image)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 func (s *snykProvider) isAuthenticated(auths map[string]types.AuthConfig) (bool, error) {
