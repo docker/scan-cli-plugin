@@ -43,7 +43,7 @@ func (s *snykProvider) Authenticate(token string) error {
 	cmd := exec.Command(s.path, "auth", token)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	return checkCommandErr(cmd.Run())
 }
 
 func (s *snykProvider) Scan(image string) error {
@@ -56,7 +56,7 @@ func (s *snykProvider) Scan(image string) error {
 	cmd := exec.Command(s.path, "test", "--docker", image)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	return checkCommandErr(cmd.Run())
 }
 
 func (s *snykProvider) isAuthenticated(auths map[string]types.AuthConfig) (bool, error) {
@@ -99,16 +99,23 @@ func (s *snykProvider) Version() (string, error) {
 	cmd.Stdout = buff
 	cmd.Stderr = buffErr
 	if err := cmd.Run(); err != nil {
-		if err == exec.ErrNotFound {
-			// Could not find Snyk in $PATH
-			return "", fmt.Errorf("could not find Snyk binary")
-		} else if _, ok := err.(*exec.Error); ok {
-			return "", fmt.Errorf("could not find Snyk binary")
-		} else if _, ok := err.(*os.PathError); ok {
-			// The specified path for Snyk binary does not exist
-			return "", fmt.Errorf("could not find Snyk binary")
-		}
-		return "", fmt.Errorf("fail to call Snyk: %s %s", err, buffErr.String())
+		return "", checkCommandErr(err)
 	}
 	return fmt.Sprintf("Snyk (%s)", strings.TrimSpace(buff.String())), nil
+}
+
+func checkCommandErr(err error) error {
+	if err == nil {
+		return nil
+	}
+	if err == exec.ErrNotFound {
+		// Could not find Snyk in $PATH
+		return fmt.Errorf("could not find Snyk binary")
+	} else if _, ok := err.(*exec.Error); ok {
+		return fmt.Errorf("could not find Snyk binary")
+	} else if _, ok := err.(*os.PathError); ok {
+		// The specified path for Snyk binary does not exist
+		return fmt.Errorf("could not find Snyk binary")
+	}
+	return err
 }
