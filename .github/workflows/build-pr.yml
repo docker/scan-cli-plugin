@@ -1,5 +1,4 @@
 name: Build PR
-
 on: [push]
 
 jobs:
@@ -23,16 +22,13 @@ jobs:
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b . v1.27.0
           ./golangci-lint run
 
-  build:
-    name: Build
+  build-linux:
+    name: Build Linux
     runs-on: ubuntu-latest
     env:
       GO111MODULE: "on"
       E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
     steps:
-      - name: Docker info
-        run: docker info
-
       - name: Docker version
         run: docker version
 
@@ -45,7 +41,8 @@ jobs:
       - name: Checkout code into the Go module directory
         uses: actions/checkout@v2
 
-      - uses: actions/cache@v1
+      - name: Golang cache
+        uses: actions/cache@v1
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
