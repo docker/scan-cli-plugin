@@ -1,4 +1,4 @@
-![](https://github.com/docker/docker-scan/workflows/Nightly%20Build/badge.svg)
+[![Nightly Build](https://github.com/docker/docker-scan/workflows/Nightly%20Build/badge.svg)](https://github.com/docker/docker-scan/actions?query=workflow%3A%22Nightly+Build%22)
 
 # docker-scan
 Snyk CLI Plugin PoC
