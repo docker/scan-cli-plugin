@@ -1,3 +1,5 @@
+![](https://github.com/docker/docker-scan/workflows/Nightly%20Build/badge.svg)
+
 # docker-scan
 Snyk CLI Plugin PoC
 
