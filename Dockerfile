@@ -91,18 +91,13 @@ CMD ["make", "-f", "builder.Makefile", "test-unit"]
 FROM docker:${CLI_VERSION} AS cli
 
 ####
-# SNYK
+# DOWNLOAD
 ####
-FROM alpine:${ALPINE_VERSION} AS snyk
+FROM golang:${GO_VERSION} AS download
 ARG SNYK_DESKTOP_VERSION=1.332.0
 ARG SNYK_USER_VERSION=1.334.0
-
-RUN apk add -U --no-cache wget
-# install snyk desktop binary
-WORKDIR /root
-RUN wget https://github.com/snyk/snyk/releases/download/v${SNYK_DESKTOP_VERSION}/snyk-linux -nv -O snyk-desktop
-# install snyk user binary
-RUN wget https://github.com/snyk/snyk/releases/download/v${SNYK_USER_VERSION}/snyk-linux -nv -O snyk-user
+COPY builder.Makefile vars.mk ./
+RUN make -f builder.Makefile download
 
 ####
 # E2E
@@ -119,13 +114,11 @@ ENV SNYK_DESKTOP_PATH="/root/.docker/scan"
 ENV DOCKER_CONFIG="/root/.docker"
 
 # install snyk binaries
-COPY --from=snyk /root/snyk-desktop ${DOCKER_CONFIG}/scan/snyk
-COPY --from=snyk /root/snyk-user $SNYK_USER_PATH/snyk
-RUN chmod +x ${DOCKER_CONFIG}/scan/snyk $SNYK_USER_PATH/snyk
-COPY --from=gotestsum /root/gotestsum /usr/local/bin/gotestsum
+COPY --from=download /go/docker-config docker-config/
+COPY --from=download /go/bin/gotestsum /usr/local/bin/gotestsum
 # install docker CLI
 COPY --from=cli /usr/local/bin/docker /usr/local/bin/docker
 # install docker-scan plugin
-COPY --from=cross-build /go/src/github.com/docker/docker-scan/dist/docker-scan_linux_amd64 ${DOCKER_CONFIG}/cli-plugins/docker-scan
-RUN chmod +x ${DOCKER_CONFIG}/cli-plugins/docker-scan
+COPY --from=cross-build /go/src/github.com/docker/docker-scan/dist/docker-scan_linux_amd64 ./bin/docker-scan
+RUN chmod +x ./bin/docker-scan
 CMD ["make", "-f", "builder.Makefile", "e2e"]

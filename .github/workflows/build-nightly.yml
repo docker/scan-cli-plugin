@@ -1,0 +1,47 @@
+name: Nightly Build
+on:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+    defaults:
+      run:
+        shell: bash
+    env:
+      GO111MODULE: "on"
+
+    steps:
+      - name: Install Docker CLI
+        if: ${{ matrix.os == 'macos-latest' }}
+        # Only the CLI is needed to run docker-scan e2e
+        run: brew install docker
+
+      - name: Set up Go 1.14
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+        id: go
+
+      - name: Checkout code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Golang cache
+        uses: actions/cache@v1
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download binaries
+        run: make -f builder.Makefile download
+
+      - name: Build binary and run e2e tests
+        env:
+          E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
+        run: make -f builder.Makefile build test-unit e2e
