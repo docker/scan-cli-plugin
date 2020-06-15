@@ -6,4 +6,5 @@ A tool to scan your docker image
 Options:
       --auth      Authenticate to the scan provider using an optional
                   token, or web base token if empty
+      --json      Display results with JSON format
       --version   Display version of scan plugin

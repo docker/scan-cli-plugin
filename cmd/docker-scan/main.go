@@ -40,6 +40,7 @@ func newScanCmd(dockerCli command.Cli) *cobra.Command {
 	var (
 		authenticate bool
 		showVersion  bool
+		jsonFormat   bool
 	)
 	cmd := &cobra.Command{
 		Short:       "Docker Scan",
@@ -51,7 +52,16 @@ func newScanCmd(dockerCli command.Cli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			scanProvider := provider.NewSnykProvider(conf.Path, dockerCli.ConfigFile().AuthConfigs)
+			opts := []provider.SnykProviderOps{
+				provider.WithPath(conf.Path),
+				provider.WithAuthConfig(dockerCli.ConfigFile().AuthConfigs)}
+			if jsonFormat {
+				opts = append(opts, provider.WithJSON())
+			}
+			scanProvider, err := provider.NewSnykProvider(opts...)
+			if err != nil {
+				return err
+			}
 			// --version is set, let's show the version
 			if showVersion {
 				version, err := internal.FullVersion(scanProvider)
@@ -93,5 +103,6 @@ please login to Docker Hub using the Docker Login command`)
 	}
 	cmd.Flags().BoolVar(&authenticate, "auth", false, "Authenticate to the scan provider using an optional token, or web base token if empty")
 	cmd.Flags().BoolVar(&showVersion, "version", false, "Display version of scan plugin")
+	cmd.Flags().BoolVar(&jsonFormat, "json", false, "Display results with JSON format")
 	return cmd
 }
