@@ -18,9 +18,9 @@ import (
 const dockerHubAuthURL = "https://index.docker.io/v1/"
 
 type snykProvider struct {
-	path       string
-	auths      map[string]types.AuthConfig
-	JSONFormat bool
+	path  string
+	auths map[string]types.AuthConfig
+	flags []string
 }
 
 type snykConfig struct {
@@ -30,7 +30,9 @@ type snykConfig struct {
 // NewSnykProvider returns a Snyk implementation of scan provider
 //path string, authsConfig map[string]types.AuthConfig
 func NewSnykProvider(ops ...SnykProviderOps) (Provider, error) {
-	var provider snykProvider
+	provider := snykProvider{
+		flags: []string{"test", "--docker"},
+	}
 	for _, op := range ops {
 		if err := op(&provider); err != nil {
 			return nil, err
@@ -64,7 +66,31 @@ func WithAuthConfig(authsConfig map[string]types.AuthConfig) SnykProviderOps {
 // WithJSON set JSONFormat to display scan result in JSON
 func WithJSON() SnykProviderOps {
 	return func(provider *snykProvider) error {
-		provider.JSONFormat = true
+		provider.flags = append(provider.flags, "--json")
+		return nil
+	}
+}
+
+// WithoutBaseImageVulnerabilities don't display the vulnerabilities from the base image
+func WithoutBaseImageVulnerabilities() SnykProviderOps {
+	return func(provider *snykProvider) error {
+		provider.flags = append(provider.flags, "--exclude-base-image-vulns")
+		return nil
+	}
+}
+
+// WithDockerFile improve result by providing a Dockerfile
+func WithDockerFile(path string) SnykProviderOps {
+	return func(provider *snykProvider) error {
+		provider.flags = append(provider.flags, "--file="+path)
+		return nil
+	}
+}
+
+// WithDependencyTree shows the dependency tree before scan results
+func WithDependencyTree() SnykProviderOps {
+	return func(provider *snykProvider) error {
+		provider.flags = append(provider.flags, "--print-deps")
 		return nil
 	}
 }
@@ -88,12 +114,7 @@ func (s *snykProvider) Scan(image string) error {
 		}
 		return &authenticationError{}
 	}
-	flags := []string{"test", "--docker"}
-	if s.JSONFormat {
-		flags = append(flags, "--json")
-	}
-	flags = append(flags, image)
-	cmd := exec.Command(s.path, flags...)
+	cmd := exec.Command(s.path, append(s.flags, image)...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return checkCommandErr(cmd.Run())
