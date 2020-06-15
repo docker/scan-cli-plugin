@@ -1,6 +1,7 @@
 # Binaries for programs and plugins
 bin/
 dist/
+docker-config/
 *.exe
 *.exe~
 *.dll

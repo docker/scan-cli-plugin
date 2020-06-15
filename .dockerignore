@@ -1,3 +1,4 @@
 Dockerfile
 bin/
 dist/
+docker-config/

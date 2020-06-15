@@ -18,8 +18,9 @@ import (
 const dockerHubAuthURL = "https://index.docker.io/v1/"
 
 type snykProvider struct {
-	path  string
-	auths map[string]types.AuthConfig
+	path       string
+	auths      map[string]types.AuthConfig
+	JSONFormat bool
 }
 
 type snykConfig struct {
@@ -27,11 +28,45 @@ type snykConfig struct {
 }
 
 // NewSnykProvider returns a Snyk implementation of scan provider
-func NewSnykProvider(path string, authsConfig map[string]types.AuthConfig) Provider {
-	if p, err := exec.LookPath("snyk"); err == nil {
-		path = p
+//path string, authsConfig map[string]types.AuthConfig
+func NewSnykProvider(ops ...SnykProviderOps) (Provider, error) {
+	var provider snykProvider
+	for _, op := range ops {
+		if err := op(&provider); err != nil {
+			return nil, err
+		}
 	}
-	return &snykProvider{path, authsConfig}
+	return &provider, nil
+}
+
+// SnykProviderOps function taking a pointer to a Snyk Provider and returning an error if needed
+type SnykProviderOps func(*snykProvider) error
+
+// WithPath update the Snyk provider with the path from the configuration
+func WithPath(path string) SnykProviderOps {
+	return func(provider *snykProvider) error {
+		if p, err := exec.LookPath("snyk"); err == nil {
+			path = p
+		}
+		provider.path = path
+		return nil
+	}
+}
+
+// WithAuthConfig update the Snyk provider with the auths configuration from Docker CLI
+func WithAuthConfig(authsConfig map[string]types.AuthConfig) SnykProviderOps {
+	return func(provider *snykProvider) error {
+		provider.auths = authsConfig
+		return nil
+	}
+}
+
+// WithJSON set JSONFormat to display scan result in JSON
+func WithJSON() SnykProviderOps {
+	return func(provider *snykProvider) error {
+		provider.JSONFormat = true
+		return nil
+	}
 }
 
 func (s *snykProvider) Authenticate(token string) error {
@@ -53,7 +88,12 @@ func (s *snykProvider) Scan(image string) error {
 		}
 		return &authenticationError{}
 	}
-	cmd := exec.Command(s.path, "test", "--docker", image)
+	flags := []string{"test", "--docker"}
+	if s.JSONFormat {
+		flags = append(flags, "--json")
+	}
+	flags = append(flags, image)
+	cmd := exec.Command(s.path, flags...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return checkCommandErr(cmd.Run())

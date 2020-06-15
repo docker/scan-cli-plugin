@@ -120,6 +120,52 @@ func TestScanWithSnyk(t *testing.T) {
 	}
 }
 
+func TestScanJsonOutput(t *testing.T) {
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
+	}
+	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
+	defer cleanFunction()
+
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
+	defer cleanup()
+
+	createScanConfigFile(t, configDir)
+
+	testCases := []struct {
+		name     string
+		image    string
+		exitCode int
+		isEmpty  bool
+	}{
+		{
+			name:     "image-without-vulnerabilities",
+			image:    ImageWithoutVulnerabilities,
+			exitCode: 0,
+			isEmpty:  true,
+		},
+		{
+			name:     "image-with-vulnerabilities",
+			image:    ImageWithVulnerabilities,
+			exitCode: 1,
+			isEmpty:  false,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			cmd.Command = dockerCli.Command("scan", "--json", testCase.image)
+			output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{ExitCode: testCase.exitCode}).Combined()
+			var jsonOutput JSONOutput
+			assert.NilError(t, json.Unmarshal([]byte(output), &jsonOutput))
+			assert.Equal(t, len(jsonOutput.Vulnerabilities) == 0, testCase.isEmpty)
+		})
+	}
+}
+
+type JSONOutput struct {
+	Vulnerabilities []interface{} `json:"vulnerabilities"`
+}
+
 func createSnykConfFile(t *testing.T, token string) (*fs.Dir, func()) {
 	content := fmt.Sprintf(`{"api" : "%s"}`, token)
 	homeDir := fs.NewDir(t, t.Name(),
