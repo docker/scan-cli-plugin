@@ -36,91 +36,106 @@ func main() {
 	})
 }
 
+type options struct {
+	authenticate   bool
+	dependencyTree bool
+	dockerFilePath string
+	excludeBase    bool
+	jsonFormat     bool
+	showVersion    bool
+}
+
 func newScanCmd(dockerCli command.Cli) *cobra.Command {
-	var (
-		authenticate   bool
-		showVersion    bool
-		jsonFormat     bool
-		excludeBase    bool
-		dockerFilePath string
-		dependencyTree bool
-	)
+	var flags options
 	cmd := &cobra.Command{
 		Short:       "Docker Scan",
 		Long:        `A tool to scan your docker image`,
 		Use:         "scan [OPTIONS] IMAGE",
 		Annotations: map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			conf, err := config.ReadConfigFile()
+			scanProvider, err := configureProvider(dockerCli, flags)
 			if err != nil {
 				return err
 			}
-			opts := []provider.SnykProviderOps{
-				provider.WithPath(conf.Path),
-				provider.WithAuthConfig(dockerCli.ConfigFile().AuthConfigs)}
-			if jsonFormat {
-				opts = append(opts, provider.WithJSON())
+			if flags.showVersion {
+				return runVersion(scanProvider)
 			}
-			if dockerFilePath != "" {
-				opts = append(opts, provider.WithDockerFile(dockerFilePath))
-				if excludeBase {
-					opts = append(opts, provider.WithoutBaseImageVulnerabilities())
-				}
-			} else if excludeBase {
-				return fmt.Errorf("--file flag is mandatory to use --exclude-base flag")
+			if flags.authenticate {
+				return runAuthentication(scanProvider, args)
 			}
-			if dependencyTree {
-				opts = append(opts, provider.WithDependencyTree())
-			}
-			scanProvider, err := provider.NewSnykProvider(opts...)
-			if err != nil {
-				return err
-			}
-			// --version is set, let's show the version
-			if showVersion {
-				version, err := internal.FullVersion(scanProvider)
-				if err != nil {
-					return err
-				}
-				fmt.Println(version)
-				return nil
-			}
-			// --auth flag is set, we run the authentication
-			if authenticate {
-				token := ""
-				switch {
-				case len(args) == 1:
-					token = args[0]
-				case len(args) > 1:
-					return fmt.Errorf(`--auth flag expects maximum one argument`)
-				}
-				return scanProvider.Authenticate(token)
-			}
-			// let's run the scan
-			if len(args) != 1 {
-				if err = cmd.Usage(); err != nil {
-					return err
-				}
-				return fmt.Errorf(`"docker scan" requires exactly 1 argument`)
-			}
-
-			err = scanProvider.Scan(args[0])
-			if provider.IsAuthenticationError(err) {
-				return fmt.Errorf(`You need to be logged in to Docker Hub to use scan feature.
-please login to Docker Hub using the Docker Login command`)
-			}
-			if exitError, ok := err.(*exec.ExitError); ok {
-				os.Exit(exitError.ExitCode())
-			}
-			return err
+			return runScan(cmd, scanProvider, args)
 		},
 	}
-	cmd.Flags().BoolVar(&authenticate, "auth", false, "Authenticate to the scan provider using an optional token, or web base token if empty")
-	cmd.Flags().BoolVar(&showVersion, "version", false, "Display version of scan plugin")
-	cmd.Flags().BoolVar(&jsonFormat, "json", false, "Display results with JSON format")
-	cmd.Flags().StringVarP(&dockerFilePath, "file", "f", "", "Provide the Dockerfile for better scan results")
-	cmd.Flags().BoolVar(&excludeBase, "exclude-base", false, "Exclude base image from vulnerabiliy scanning (needs to provide a Dockerfile using --file)")
-	cmd.Flags().BoolVar(&dependencyTree, "dependency-tree", false, "Show dependency tree before scan results")
+	cmd.Flags().BoolVar(&flags.authenticate, "auth", false, "Authenticate to the scan provider using an optional token, or web base token if empty")
+	cmd.Flags().BoolVar(&flags.dependencyTree, "dependency-tree", false, "Show dependency tree before scan results")
+	cmd.Flags().BoolVar(&flags.excludeBase, "exclude-base", false, "Exclude base image from vulnerabiliy scanning (needs to provide a Dockerfile using --file)")
+	cmd.Flags().StringVarP(&flags.dockerFilePath, "file", "f", "", "Provide the Dockerfile for better scan results")
+	cmd.Flags().BoolVar(&flags.jsonFormat, "json", false, "Display results with JSON format")
+	cmd.Flags().BoolVar(&flags.showVersion, "version", false, "Display version of scan plugin")
 
 	return cmd
+}
+
+func configureProvider(dockerCli command.Cli, flags options) (provider.Provider, error) {
+	conf, err := config.ReadConfigFile()
+	if err != nil {
+		return nil, err
+	}
+	opts := []provider.SnykProviderOps{
+		provider.WithPath(conf.Path),
+		provider.WithAuthConfig(dockerCli.ConfigFile().AuthConfigs)}
+	if flags.jsonFormat {
+		opts = append(opts, provider.WithJSON())
+	}
+	if flags.dockerFilePath != "" {
+		opts = append(opts, provider.WithDockerFile(flags.dockerFilePath))
+		if flags.excludeBase {
+			opts = append(opts, provider.WithoutBaseImageVulnerabilities())
+		}
+	} else if flags.excludeBase {
+		return nil, fmt.Errorf("--file flag is mandatory to use --exclude-base flag")
+	}
+	if flags.dependencyTree {
+		opts = append(opts, provider.WithDependencyTree())
+	}
+	return provider.NewSnykProvider(opts...)
+}
+
+func runVersion(scanProvider provider.Provider) error {
+	version, err := internal.FullVersion(scanProvider)
+	if err != nil {
+		return err
+	}
+	fmt.Println(version)
+	return nil
+}
+
+func runAuthentication(scanProvider provider.Provider, args []string) error {
+	token := ""
+	switch {
+	case len(args) == 1:
+		token = args[0]
+	case len(args) > 1:
+		return fmt.Errorf(`--auth flag expects maximum one argument`)
+	}
+	return scanProvider.Authenticate(token)
+}
+
+func runScan(cmd *cobra.Command, scanProvider provider.Provider, args []string) error {
+	if len(args) != 1 {
+		if err := cmd.Usage(); err != nil {
+			return err
+		}
+		return fmt.Errorf(`"docker scan" requires exactly 1 argument`)
+	}
+
+	err := scanProvider.Scan(args[0])
+	if provider.IsAuthenticationError(err) {
+		return fmt.Errorf(`You need to be logged in to Docker Hub to use scan feature.
+please login to Docker Hub using the Docker Login command`)
+	}
+	if exitError, ok := err.(*exec.ExitError); ok {
+		os.Exit(exitError.ExitCode())
+	}
+	return err
 }
