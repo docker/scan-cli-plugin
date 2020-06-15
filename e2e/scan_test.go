@@ -20,8 +20,9 @@ import (
 )
 
 const (
-	ImageWithVulnerabilities    = "alpine:3.10.0"
-	ImageWithoutVulnerabilities = "dockerscanci/scratch:1.0"
+	ImageWithVulnerabilities      = "alpine:3.10.0"
+	ImageWithoutVulnerabilities   = "dockerscanci/scratch:1.0"          // FROM scratch
+	ImageBaseImageVulnerabilities = "dockerscanci/base-image-vulns:1.0" // FROM alpine:3.10.0
 )
 
 func TestScanFailsNoAuthentication(t *testing.T) {
@@ -164,6 +165,41 @@ func TestScanJsonOutput(t *testing.T) {
 
 type JSONOutput struct {
 	Vulnerabilities []interface{} `json:"vulnerabilities"`
+}
+
+func TestScanWithFileAndExcludeBaseImageVulns(t *testing.T) {
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
+	}
+	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
+	defer cleanFunction()
+
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
+	defer cleanup()
+
+	createScanConfigFile(t, configDir)
+
+	cmd.Command = dockerCli.Command("scan", "--file", "./testdata/Dockerfile", "--exclude-base", ImageBaseImageVulnerabilities)
+	output := icmd.RunCmd(cmd).Assert(t, icmd.Success).Combined()
+	assert.Assert(t, strings.Contains(output, "found 0 issues."))
+}
+
+func TestScanWithExcludeBaseImageVulns(t *testing.T) {
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
+	}
+	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
+	defer cleanFunction()
+
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
+	defer cleanup()
+
+	createScanConfigFile(t, configDir)
+
+	cmd.Command = dockerCli.Command("scan", "--exclude-base", ImageBaseImageVulnerabilities)
+	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
+		ExitCode: 1,
+		Err:      "--file flag is mandatory to use --exclude-base flag"})
 }
 
 func createSnykConfFile(t *testing.T, token string) (*fs.Dir, func()) {

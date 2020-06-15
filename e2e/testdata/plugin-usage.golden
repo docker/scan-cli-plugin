@@ -4,7 +4,10 @@ Usage:	docker scan [OPTIONS] IMAGE
 A tool to scan your docker image
 
 Options:
-      --auth      Authenticate to the scan provider using an optional
-                  token, or web base token if empty
-      --json      Display results with JSON format
-      --version   Display version of scan plugin
+      --auth           Authenticate to the scan provider using an
+                       optional token, or web base token if empty
+      --exclude-base   Exclude base image from vulnerabiliy scanning
+                       (needs to provide a Dockerfile using --file)
+  -f, --file string    Provide the Dockerfile for better scan results
+      --json           Display results with JSON format
+      --version        Display version of scan plugin

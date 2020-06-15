@@ -38,9 +38,11 @@ func main() {
 
 func newScanCmd(dockerCli command.Cli) *cobra.Command {
 	var (
-		authenticate bool
-		showVersion  bool
-		jsonFormat   bool
+		authenticate   bool
+		showVersion    bool
+		jsonFormat     bool
+		excludeBase    bool
+		dockerFilePath string
 	)
 	cmd := &cobra.Command{
 		Short:       "Docker Scan",
@@ -57,6 +59,14 @@ func newScanCmd(dockerCli command.Cli) *cobra.Command {
 				provider.WithAuthConfig(dockerCli.ConfigFile().AuthConfigs)}
 			if jsonFormat {
 				opts = append(opts, provider.WithJSON())
+			}
+			if dockerFilePath != "" {
+				opts = append(opts, provider.WithDockerFile(dockerFilePath))
+				if excludeBase {
+					opts = append(opts, provider.WithoutBaseImageVulnerabilities())
+				}
+			} else if excludeBase {
+				return fmt.Errorf("--file flag is mandatory to use --exclude-base flag")
 			}
 			scanProvider, err := provider.NewSnykProvider(opts...)
 			if err != nil {
@@ -104,5 +114,8 @@ please login to Docker Hub using the Docker Login command`)
 	cmd.Flags().BoolVar(&authenticate, "auth", false, "Authenticate to the scan provider using an optional token, or web base token if empty")
 	cmd.Flags().BoolVar(&showVersion, "version", false, "Display version of scan plugin")
 	cmd.Flags().BoolVar(&jsonFormat, "json", false, "Display results with JSON format")
+	cmd.Flags().StringVarP(&dockerFilePath, "file", "f", "", "Provide the Dockerfile for better scan results")
+	cmd.Flags().BoolVar(&excludeBase, "exclude-base", false, "Exclude base image from vulnerabiliy scanning (needs to provide a Dockerfile using --file)")
+
 	return cmd
 }
