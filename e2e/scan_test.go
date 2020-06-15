@@ -202,6 +202,24 @@ func TestScanWithExcludeBaseImageVulns(t *testing.T) {
 		Err:      "--file flag is mandatory to use --exclude-base flag"})
 }
 
+func TestScanWithDependencies(t *testing.T) {
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
+	}
+	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
+	defer cleanFunction()
+
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
+	defer cleanup()
+
+	createScanConfigFile(t, configDir)
+
+	cmd.Command = dockerCli.Command("scan", "--dependency-tree", ImageWithVulnerabilities)
+	output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{ExitCode: 1}).Combined()
+	assert.Assert(t, strings.Contains(output, "docker-image|alpine @ 3.10.0")) // beginning of the dependency tree
+	assert.Assert(t, strings.Contains(output, "vulnerability found"))
+}
+
 func createSnykConfFile(t *testing.T, token string) (*fs.Dir, func()) {
 	content := fmt.Sprintf(`{"api" : "%s"}`, token)
 	homeDir := fs.NewDir(t, t.Name(),

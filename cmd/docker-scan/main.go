@@ -43,6 +43,7 @@ func newScanCmd(dockerCli command.Cli) *cobra.Command {
 		jsonFormat     bool
 		excludeBase    bool
 		dockerFilePath string
+		dependencyTree bool
 	)
 	cmd := &cobra.Command{
 		Short:       "Docker Scan",
@@ -67,6 +68,9 @@ func newScanCmd(dockerCli command.Cli) *cobra.Command {
 				}
 			} else if excludeBase {
 				return fmt.Errorf("--file flag is mandatory to use --exclude-base flag")
+			}
+			if dependencyTree {
+				opts = append(opts, provider.WithDependencyTree())
 			}
 			scanProvider, err := provider.NewSnykProvider(opts...)
 			if err != nil {
@@ -116,6 +120,7 @@ please login to Docker Hub using the Docker Login command`)
 	cmd.Flags().BoolVar(&jsonFormat, "json", false, "Display results with JSON format")
 	cmd.Flags().StringVarP(&dockerFilePath, "file", "f", "", "Provide the Dockerfile for better scan results")
 	cmd.Flags().BoolVar(&excludeBase, "exclude-base", false, "Exclude base image from vulnerabiliy scanning (needs to provide a Dockerfile using --file)")
+	cmd.Flags().BoolVar(&dependencyTree, "dependency-tree", false, "Show dependency tree before scan results")
 
 	return cmd
 }

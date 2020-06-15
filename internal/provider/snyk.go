@@ -87,6 +87,14 @@ func WithDockerFile(path string) SnykProviderOps {
 	}
 }
 
+// WithDependencyTree shows the dependency tree before scan results
+func WithDependencyTree() SnykProviderOps {
+	return func(provider *snykProvider) error {
+		provider.flags = append(provider.flags, "--print-deps")
+		return nil
+	}
+}
+
 func (s *snykProvider) Authenticate(token string) error {
 	if token != "" {
 		if _, err := uuid.Parse(token); err != nil {
