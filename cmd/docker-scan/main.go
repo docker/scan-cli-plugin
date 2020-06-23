@@ -1,17 +1,19 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 
-	"github.com/docker/scan-cli-plugin/config"
-
 	"github.com/docker/cli/cli-plugins/manager"
 	"github.com/docker/cli/cli-plugins/plugin"
 	"github.com/docker/cli/cli/command"
-	"github.com/docker/scan-cli-plugin/internal"
-	"github.com/docker/scan-cli-plugin/internal/provider"
+	"github.com/docker/docker-scan/config"
+	"github.com/docker/docker-scan/internal"
+	"github.com/docker/docker-scan/internal/authentication"
+	"github.com/docker/docker-scan/internal/provider"
+	registrytypes "github.com/docker/docker/api/types/registry"
 	"github.com/spf13/cobra"
 )
 
@@ -61,7 +63,7 @@ func newScanCmd(dockerCli command.Cli) *cobra.Command {
 				return runVersion(scanProvider)
 			}
 			if flags.authenticate {
-				return runAuthentication(scanProvider, args)
+				return runAuthentication(dockerCli, scanProvider, args)
 			}
 			return runScan(cmd, scanProvider, args)
 		},
@@ -110,15 +112,24 @@ func runVersion(scanProvider provider.Provider) error {
 	return nil
 }
 
-func runAuthentication(scanProvider provider.Provider, args []string) error {
-	token := ""
-	switch {
-	case len(args) == 1:
-		token = args[0]
-	case len(args) > 1:
-		return fmt.Errorf(`--auth flag expects maximum one argument`)
-	}
-	return scanProvider.Authenticate(token)
+var hub = &registrytypes.IndexInfo{
+	Name:     "docker.io",
+	Mirrors:  nil,
+	Secure:   true,
+	Official: true,
+}
+
+func runAuthentication(dockerCli command.Cli, scanProvider provider.Provider, args []string) error {
+	hubAuthConfig := command.ResolveAuthConfig(context.Background(), dockerCli, hub)
+	return authentication.Authenticate(hubAuthConfig)
+	// token := ""
+	// switch {
+	// case len(args) == 1:
+	// 	token = args[0]
+	// case len(args) > 1:
+	// 	return fmt.Errorf(`--auth flag expects maximum one argument`)
+	// }
+	// return scanProvider.Authenticate(token)
 }
 
 func runScan(cmd *cobra.Command, scanProvider provider.Provider, args []string) error {
