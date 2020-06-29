@@ -12,7 +12,7 @@ endif
 
 GOOS ?= $(shell go env GOOS)
 
-PKG_NAME=github.com/docker/docker-scan
+PKG_NAME=github.com/docker/scan-cli-plugin
 STATIC_FLAGS= CGO_ENABLED=0
 LDFLAGS := "-s -w \
   -X $(PKG_NAME)/internal.GitCommit=$(COMMIT) \

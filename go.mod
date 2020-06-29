@@ -1,4 +1,4 @@
-module github.com/docker/docker-scan
+module github.com/docker/scan-cli-plugin
 
 go 1.14
 

@@ -9,7 +9,7 @@ import (
 	"gotest.tools/v3/env"
 	"gotest.tools/v3/icmd"
 
-	"github.com/docker/docker-scan/internal"
+	"github.com/docker/scan-cli-plugin/internal"
 )
 
 func TestVersionSnykUserBinary(t *testing.T) {

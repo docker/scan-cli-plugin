@@ -5,13 +5,13 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/docker/docker-scan/config"
+	"github.com/docker/scan-cli-plugin/config"
 
 	"github.com/docker/cli/cli-plugins/manager"
 	"github.com/docker/cli/cli-plugins/plugin"
 	"github.com/docker/cli/cli/command"
-	"github.com/docker/docker-scan/internal"
-	"github.com/docker/docker-scan/internal/provider"
+	"github.com/docker/scan-cli-plugin/internal"
+	"github.com/docker/scan-cli-plugin/internal/provider"
 	"github.com/spf13/cobra"
 )
 

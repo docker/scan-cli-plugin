@@ -1,4 +1,4 @@
-[![Nightly Build](https://github.com/docker/docker-scan/workflows/Nightly%20Build/badge.svg)](https://github.com/docker/docker-scan/actions?query=workflow%3A%22Nightly+Build%22)
+[![Nightly Build](https://github.com/docker/scan-cli-plugin/workflows/Nightly%20Build/badge.svg)](https://github.com/docker/scan-cli-plugin/actions?query=workflow%3A%22Nightly+Build%22)
 
 # docker-scan
 Snyk CLI Plugin PoC
@@ -22,7 +22,7 @@ $ make install
 * You have only make and docker (of course):
 ```console
 $ make dbuild
-$ cp bin/docker-scan ~/.docker/cli-plugins
+$ cp bin/scan-cli-plugin ~/.docker/cli-plugins
 ```
 
 * You have only docker:
