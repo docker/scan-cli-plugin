@@ -8,7 +8,7 @@ ARG GOLANGCI_LINT_VERSION=v1.27.0-alpine
 # BUILDER
 ####
 FROM --platform=${BUILDPLATFORM} golang:${GO_VERSION} AS builder
-WORKDIR /go/src/github.com/docker/docker-scan
+WORKDIR /go/src/github.com/docker/scan-cli-plugin
 
 # cache go vendoring
 COPY go.* ./
@@ -46,7 +46,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 # SCAN
 ####
 FROM scratch AS scan
-COPY --from=build /go/src/github.com/docker/docker-scan/bin/docker-scan /docker-scan
+COPY --from=build /go/src/github.com/docker/scan-cli-plugin/bin/docker-scan /docker-scan
 
 ####
 # CROSS_BUILD
@@ -61,7 +61,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 # CROSS
 ####
 FROM scratch AS cross
-COPY --from=cross-build /go/src/github.com/docker/docker-scan/dist /
+COPY --from=cross-build /go/src/github.com/docker/scan-cli-plugin/dist /
 
 ####
 # GOTESTSUM
@@ -119,6 +119,6 @@ COPY --from=download /go/bin/gotestsum /usr/local/bin/gotestsum
 # install docker CLI
 COPY --from=cli /usr/local/bin/docker /usr/local/bin/docker
 # install docker-scan plugin
-COPY --from=cross-build /go/src/github.com/docker/docker-scan/dist/docker-scan_linux_amd64 ./bin/docker-scan
+COPY --from=cross-build /go/src/github.com/docker/scan-cli-plugin/dist/docker-scan_linux_amd64 ./bin/docker-scan
 RUN chmod +x ./bin/docker-scan
 CMD ["make", "-f", "builder.Makefile", "e2e"]

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/docker/docker-scan/internal/provider"
+	"github.com/docker/scan-cli-plugin/internal/provider"
 )
 
 var (
