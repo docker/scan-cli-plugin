@@ -3,9 +3,13 @@ package authentication
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
+	cliConfig "github.com/docker/cli/cli/config"
 	"io/ioutil"
 	"net/http"
+	"os"
+	"path/filepath"
 
 	"github.com/docker/docker/api/types"
 )
@@ -18,24 +22,52 @@ const (
 // if the one stored locally has expired
 type Authenticator struct {
 	hub hubClient
+	tokensPath string
 }
 
 //NewAuthenticator returns an Authenticator
 // configured to run against Docker Hub prod or staging
 func NewAuthenticator() *Authenticator {
-	return &Authenticator{hub: hubClient{}}
+	return &Authenticator{
+		hub: hubClient{},
+		tokensPath: filepath.Join(cliConfig.Dir(), "scan", "tokens.json"),
+	}
 }
 
-//Authenticate checks the local DockerScanID token for expiry,
+//Authenticate checks the local DockerScanID content for expiry,
 // if expired it negociates a new one on Docker Hub.
 func (a *Authenticator) Authenticate(hubAuthConfig types.AuthConfig) (string, error) {
-	// TODO: check expiry
+	token, err := a.getLocalToken(hubAuthConfig)
+	if err != nil{
+		return "", nil
+	}
+	if token != ""{
+		return token, nil
+	}
+	// TODO: persist file
+	return a.negociateScanIdToken(hubAuthConfig)
+}
+
+func (a *Authenticator) getLocalToken(hubAuthConfig types.AuthConfig) (string, error) {
+	buf, err := ioutil.ReadFile(a.tokensPath)
+	if errors.Is(err, os.ErrNotExist){
+		return "", nil
+	}
+	tokens := map[string]string{}
+	if err := json.Unmarshal(buf, &tokens); err != nil{
+		return "", nil
+	}
+	return tokens[hubAuthConfig.Username], nil
+}
+
+func (a *Authenticator) negociateScanIdToken(hubAuthConfig types.AuthConfig) (string, error) {
 	hubToken, err := a.hub.login(hubAuthConfig)
 	if err != nil {
 		return "", err
 	}
 	return a.hub.getScanID(hubToken)
 }
+
 
 type hubClient struct {
 	domain string
@@ -60,7 +92,7 @@ func (h *hubClient) login(hubAuthConfig types.AuthConfig) (string, error) {
 	}
 
 	creds := struct {
-		Token string `json:"token"`
+		Token string `json:"content"`
 	}{}
 	if err := json.Unmarshal(buf, &creds); err != nil {
 		return "", err
@@ -69,7 +101,7 @@ func (h *hubClient) login(hubAuthConfig types.AuthConfig) (string, error) {
 }
 
 func (h *hubClient) getScanID(hubToken string) (string, error) {
-	req, err := http.NewRequest("GET", h.domain+"/v2/scan/provider/token", nil)
+	req, err := http.NewRequest("GET", h.domain+"/v2/scan/provider/content", nil)
 	if err != nil {
 		return "", err
 	}

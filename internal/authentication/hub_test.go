@@ -10,20 +10,21 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"gotest.tools/v3/assert"
+	"gotest.tools/v3/fs"
 )
 
 /* Tests:
 
 - sauver dans un fichier scan-id.json
-- verifier la signature du token + vérifier l'expiration, sinon relogger
+- verifier la signature du content + vérifier l'expiration, sinon relogger
 - verifier si loggé dans snyk?
 */
 
-func TestHubAuthenticateReturnsToken(t *testing.T) {
+func TestHubAuthenticateNegociatesToken(t *testing.T) {
 	authConfig := types.AuthConfig{}
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch r.URL.String(){
+		switch r.URL.String() {
 		case "/v2/users/login":
 			assert.Equal(t, r.Method, http.MethodPost)
 			buf, err := ioutil.ReadAll(r.Body)
@@ -31,11 +32,11 @@ func TestHubAuthenticateReturnsToken(t *testing.T) {
 			var actualAuthConfig types.AuthConfig
 			assert.NilError(t, json.Unmarshal(buf, &actualAuthConfig))
 			assert.DeepEqual(t, actualAuthConfig, authConfig)
-			fmt.Fprint(w, `{"token":"hub-token"}`)
+			fmt.Fprint(w, `{"content":"hub-content"}`)
 
-		case "/v2/scan/provider/token":
+		case "/v2/scan/provider/content":
 			assert.Equal(t, r.Method, http.MethodGet)
-			assert.Equal(t, r.Header.Get("Authorization"), "Bearer hub-token")
+			assert.Equal(t, r.Header.Get("Authorization"), "Bearer hub-content")
 			fmt.Fprint(w, `XXXX.YYYY.ZZZZ`)
 
 		default:
@@ -46,7 +47,59 @@ func TestHubAuthenticateReturnsToken(t *testing.T) {
 
 	authenticator := NewAuthenticator()
 	authenticator.hub.domain = ts.URL
-	token, err := authenticator.Authenticate(authConfig)
+	token, err := authenticator.negociateScanIdToken(authConfig)
 	assert.NilError(t, err)
 	assert.Equal(t, token, "XXXX.YYYY.ZZZZ")
+}
+
+func TestHubAuthenticateChecksTokenValidity(t *testing.T) {
+	testCases := []struct {
+		name     string
+		content  string
+		expected string
+	}{
+		{
+			name:     "missing file",
+			content:  "",
+			expected: "",
+		},
+		{
+			name:     "invalid content",
+			content:  "invalid content",
+			expected: "",
+		},
+		{
+			name:     "valid content with unknown user",
+			content:  `{"hubUser1": "ZZZZ.YYYY.XXXX"}`,
+			expected: "",
+		},
+		{
+			name: "valid content with hub user",
+			content: `{
+	"hubUser1": "ZZZZ.YYYY.XXXX",
+	"hubUser2": "XXXX.YYYY.ZZZZ"
+}`,
+			expected: "XXXX.YYYY.ZZZZ",
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var dir *fs.Dir
+			if testCase.content != "" {
+				dir = fs.NewDir(t, testCase.name, fs.WithFile("tokens.json", testCase.content))
+			} else {
+				dir = fs.NewDir(t, testCase.name)
+			}
+			defer dir.Remove()
+
+			authenticator := NewAuthenticator()
+			authenticator.tokensPath = dir.Join("tokens.json")
+
+			authConfig := types.AuthConfig{Username: "hubUser2"}
+
+			token, err := authenticator.getLocalToken(authConfig)
+			assert.NilError(t, err)
+			assert.Equal(t, token, testCase.expected)
+		})
+	}
 }
