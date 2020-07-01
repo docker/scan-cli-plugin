@@ -1,7 +1,7 @@
-name: Nightly Build
+name: Weekly Build
 on:
   schedule:
-    - cron: "0 0 * * *"
+    - cron: "0 0 * * SUN"
 
 jobs:
   build:
