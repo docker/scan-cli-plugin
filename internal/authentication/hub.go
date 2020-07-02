@@ -37,15 +37,25 @@ func NewAuthenticator() *Authenticator {
 //Authenticate checks the local DockerScanID content for expiry,
 // if expired it negociates a new one on Docker Hub.
 func (a *Authenticator) Authenticate(hubAuthConfig types.AuthConfig) (string, error) {
+	// Retrieve token from local storage
 	token, err := a.getLocalToken(hubAuthConfig)
 	if err != nil{
 		return "", nil
 	}
+	// TODO: check validity and expiration
 	if token != ""{
 		return token, nil
 	}
-	// TODO: persist file
-	return a.negociateScanIdToken(hubAuthConfig)
+	// Fetch a new token from Hub
+	token, err = a.negociateScanIdToken(hubAuthConfig)
+	if err != nil{
+		return "", nil
+	}
+	// Persist token on local storage
+	if err := a.updateLocalToken(hubAuthConfig, token); err != nil{
+		return "", err
+	}
+	return token, nil
 }
 
 func (a *Authenticator) getLocalToken(hubAuthConfig types.AuthConfig) (string, error) {
@@ -68,6 +78,30 @@ func (a *Authenticator) negociateScanIdToken(hubAuthConfig types.AuthConfig) (st
 	return a.hub.getScanID(hubToken)
 }
 
+func (a *Authenticator) updateLocalToken(hubAuthConfig types.AuthConfig, token string) error{
+	stats, err := os.Stat(a.tokensPath)
+	mode := os.FileMode(0644)
+	if err != nil{
+		if !errors.Is(err, os.ErrNotExist){
+			return err
+		}
+	}else {
+		mode = stats.Mode()
+	}
+
+	buf, err := ioutil.ReadFile(a.tokensPath)
+	if err != nil && !errors.Is(err, os.ErrNotExist){
+		return err
+	}
+	tokens := map[string]string{}
+	_ = json.Unmarshal(buf, &tokens) // if an error occurs (invalid content), we just erase the content with a new map
+	tokens[hubAuthConfig.Username] = token
+	buf, err = json.Marshal(tokens)
+	if err != nil{
+		return err
+	}
+	return ioutil.WriteFile(a.tokensPath, buf, mode)
+}
 
 type hubClient struct {
 	domain string

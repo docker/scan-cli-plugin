@@ -103,3 +103,49 @@ func TestHubAuthenticateChecksTokenValidity(t *testing.T) {
 		})
 	}
 }
+
+func TestUpdateLocalToken(t *testing.T){
+	testCases := []struct {
+		name     string
+		content  string
+		expected string
+	}{
+		{
+			name:     "no file",
+			content:  "",
+			expected: `{"hubUser1":"ZZZZ.YYYY.XXXX"}`,
+		},
+		{
+			name:     "invalid content",
+			content:  "invalid content",
+			expected: `{"hubUser1":"ZZZZ.YYYY.XXXX"}`,
+		},
+		{
+			name:     "update content with new user",
+			content:  `{"hubUser2":"XXXX.YYYY.ZZZZ"}`,
+			expected: `{"hubUser1":"ZZZZ.YYYY.XXXX","hubUser2":"XXXX.YYYY.ZZZZ"}`,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			var dir *fs.Dir
+			if testCase.content != "" {
+				dir = fs.NewDir(t, testCase.name, fs.WithFile("tokens.json", testCase.content))
+			} else {
+				dir = fs.NewDir(t, testCase.name)
+			}
+			defer dir.Remove()
+
+			authenticator := NewAuthenticator()
+			authenticator.tokensPath = dir.Join("tokens.json")
+
+			authConfig := types.AuthConfig{Username: "hubUser1"}
+
+			err := authenticator.updateLocalToken(authConfig, "ZZZZ.YYYY.XXXX")
+			assert.NilError(t, err)
+			actual, err := ioutil.ReadFile(dir.Join("tokens.json"))
+			assert.NilError(t, err)
+			assert.Equal(t, string(actual), testCase.expected)
+		})
+	}
+}
