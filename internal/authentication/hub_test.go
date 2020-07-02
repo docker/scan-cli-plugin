@@ -47,7 +47,7 @@ func TestHubAuthenticateNegociatesToken(t *testing.T) {
 
 	authenticator := NewAuthenticator()
 	authenticator.hub.domain = ts.URL
-	token, err := authenticator.negociateScanIdToken(authConfig)
+	token, err := authenticator.negotiateScanIdToken(authConfig)
 	assert.NilError(t, err)
 	assert.Equal(t, token, "XXXX.YYYY.ZZZZ")
 }

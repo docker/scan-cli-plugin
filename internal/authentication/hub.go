@@ -35,7 +35,7 @@ func NewAuthenticator() *Authenticator {
 }
 
 //Authenticate checks the local DockerScanID content for expiry,
-// if expired it negociates a new one on Docker Hub.
+// if expired it negotiates a new one on Docker Hub.
 func (a *Authenticator) Authenticate(hubAuthConfig types.AuthConfig) (string, error) {
 	// Retrieve token from local storage
 	token, err := a.getLocalToken(hubAuthConfig)
@@ -47,7 +47,7 @@ func (a *Authenticator) Authenticate(hubAuthConfig types.AuthConfig) (string, er
 		return token, nil
 	}
 	// Fetch a new token from Hub
-	token, err = a.negociateScanIdToken(hubAuthConfig)
+	token, err = a.negotiateScanIdToken(hubAuthConfig)
 	if err != nil{
 		return "", nil
 	}
@@ -70,7 +70,7 @@ func (a *Authenticator) getLocalToken(hubAuthConfig types.AuthConfig) (string, e
 	return tokens[hubAuthConfig.Username], nil
 }
 
-func (a *Authenticator) negociateScanIdToken(hubAuthConfig types.AuthConfig) (string, error) {
+func (a *Authenticator) negotiateScanIdToken(hubAuthConfig types.AuthConfig) (string, error) {
 	hubToken, err := a.hub.login(hubAuthConfig)
 	if err != nil {
 		return "", err
