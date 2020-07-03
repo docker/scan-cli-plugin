@@ -251,9 +251,9 @@ func patchConfig(t *testing.T, configDir string, url string) {
 }
 
 func createScanConfigFile(t *testing.T, configDir string) {
-	conf := config.Config{Path: fmt.Sprintf("%s/scan/snyk", configDir)}
+	conf := config.Config{Path: filepath.Join(configDir, "scan", "snyk" )}
 	buf, err := json.MarshalIndent(conf, "", "  ")
 	assert.NilError(t, err)
-	err = ioutil.WriteFile(fmt.Sprintf("%s/scan/config.json", configDir), buf, 0644)
+	err = ioutil.WriteFile(filepath.Join(configDir, "scan", "config.json"), buf, 0644)
 	assert.NilError(t, err)
 }
