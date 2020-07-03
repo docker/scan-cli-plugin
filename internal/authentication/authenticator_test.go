@@ -207,6 +207,13 @@ func TestCheckTokenValidity(t *testing.T) {
 			},
 		},
 		{
+			name:          "expired token in the last minute window",
+			expectedError: "token has expired",
+			generateToken: func() string {
+				return generateToken(t, sig, now.Add(-(59*time.Minute + 30*time.Second)))
+			},
+		},
+		{
 			name: "valid token",
 			generateToken: func() string {
 				return generateToken(t, sig, now)

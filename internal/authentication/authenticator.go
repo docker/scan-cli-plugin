@@ -18,6 +18,7 @@ import (
 
 const (
 	apiHubBaseUrl = "https://hub.docker.com"
+	expirationWindow = -1 * time.Minute
 )
 
 //Authenticator logs on docker Hub and retrieves a DockerScanID
@@ -91,7 +92,7 @@ func (a *Authenticator) checkTokenValidity(token string) error {
 	if err := parsedToken.Claims(publicKey, &out); err != nil {
 		return fmt.Errorf("invalid token: signature does not match the content: %s", err)
 	}
-	if err := out.Validate(jwt.Expected{Time: time.Now()}); err != nil {
+	if err := out.ValidateWithLeeway(jwt.Expected{Time: time.Now()}, expirationWindow); err != nil {
 		return fmt.Errorf("token has expired: %s", err)
 	}
 	return nil
