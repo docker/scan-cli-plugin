@@ -10,6 +10,12 @@ BUILD_ARGS := --build-arg SNYK_DESKTOP_VERSION=$(SNYK_DESKTOP_VERSION)\
 	--build-arg TAG_NAME=$(GIT_TAG_NAME) \
 	--build-arg GOTESTSUM_VERSION=$(GOTESTSUM_VERSION)
 
+E2E_ENV := --env E2E_TEST_AUTH_TOKEN \
+           --env E2E_HUB_URL \
+           --env E2E_HUB_USERNAME \
+           --env E2E_HUB_TOKEN \
+           --env E2E_TEST_NAME
+
 .PHONY: build
 build: ## Build docker-scan in a container
 	docker build $(BUILD_ARGS) . \
@@ -36,7 +42,7 @@ e2e-build:
 
 .PHONY: e2e
 e2e: e2e-build ## Run the end-to-end tests
-	@docker run --env E2E_TEST_AUTH_TOKEN=$(E2E_TEST_AUTH_TOKEN) --rm -v /var/run/docker.sock:/var/run/docker.sock docker-scan:e2e
+	@docker run $(E2E_ENV) --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(shell go env GOCACHE):/root/.cache/go-build docker-scan:e2e
 
 test-unit-build:
 	docker build $(BUILD_ARGS) . --target test-unit -t docker-scan:test-unit
