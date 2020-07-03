@@ -10,25 +10,19 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/docker/cli/cli/config/types"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/scan-cli-plugin/internal/authentication"
 	"github.com/google/uuid"
 	"github.com/mitchellh/go-homedir"
 )
 
-const dockerHubAuthURL = "https://index.docker.io/v1/"
-
 type snykProvider struct {
 	path  string
-	auths map[string]types.AuthConfig
 	flags []string
-}
-
-type snykConfig struct {
-	API string `json:"api,omitempty"`
+	auth  types.AuthConfig
 }
 
 // NewSnykProvider returns a Snyk implementation of scan provider
-//path string, authsConfig map[string]types.AuthConfig
 func NewSnykProvider(ops ...SnykProviderOps) (Provider, error) {
 	provider := snykProvider{
 		flags: []string{"test", "--docker"},
@@ -55,10 +49,10 @@ func WithPath(path string) SnykProviderOps {
 	}
 }
 
-// WithAuthConfig update the Snyk provider with the auths configuration from Docker CLI
-func WithAuthConfig(authsConfig map[string]types.AuthConfig) SnykProviderOps {
+// WithAuthConfig update the Snyk provider with the auth configuration from Docker CLI
+func WithAuthConfig(authConfig types.AuthConfig) SnykProviderOps {
 	return func(provider *snykProvider) error {
-		provider.auths = authsConfig
+		provider.auth = authConfig
 		return nil
 	}
 }
@@ -108,49 +102,30 @@ func (s *snykProvider) Authenticate(token string) error {
 }
 
 func (s *snykProvider) Scan(image string) error {
-	if ok, err := s.isAuthenticated(s.auths); !ok || err != nil {
+	// check snyk token
+	var token string
+	if authenticated, err := isAuthenticatedOnSnyk(); !authenticated || err != nil {
+		var err error
+		token, err = s.getToken()
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to get DockerScanID: %s", err)
 		}
-		return &authenticationError{}
 	}
+
 	cmd := exec.Command(s.path, append(s.flags, image)...)
+	cmd.Env = append(os.Environ(), fmt.Sprintf("SNYK_DOCKER_TOKEN=%s", token))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return checkCommandErr(cmd.Run())
 }
 
-func (s *snykProvider) isAuthenticated(auths map[string]types.AuthConfig) (bool, error) {
-	if ok := isAuthenticatedOnHub(auths); ok {
-		return true, nil
+func (s *snykProvider) getToken() (string, error) {
+	if s.auth.Username == "" {
+		return "", fmt.Errorf(`You need to be logged in to Docker Hub to use scan feature.
+please login to Docker Hub using the Docker Login command`)
 	}
-	return isAuthenticatedOnSnyk()
-}
-
-func isAuthenticatedOnHub(auths map[string]types.AuthConfig) bool {
-	_, ok := auths[dockerHubAuthURL]
-	return ok
-}
-
-func isAuthenticatedOnSnyk() (bool, error) {
-	home, err := homedir.Dir()
-	if err != nil {
-		return false, err
-	}
-	snykConfFilePath := filepath.Join(home, ".config", "configstore", "snyk.json")
-	buff, err := ioutil.ReadFile(snykConfFilePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, err
-	}
-	var config snykConfig
-	if err := json.Unmarshal(buff, &config); err != nil {
-		return false, err
-	}
-
-	return config.API != "", nil
+	authenticator := authentication.NewAuthenticator(jwksStaging)
+	return authenticator.GetToken(s.auth)
 }
 
 func (s *snykProvider) Version() (string, error) {
@@ -180,3 +155,58 @@ func checkCommandErr(err error) error {
 	}
 	return err
 }
+
+type snykConfig struct {
+	API string `json:"api,omitempty"`
+}
+
+func isAuthenticatedOnSnyk() (bool, error) {
+	home, err := homedir.Dir()
+	if err != nil {
+		return false, err
+	}
+	snykConfFilePath := filepath.Join(home, ".config", "configstore", "snyk.json")
+	buff, err := ioutil.ReadFile(snykConfFilePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	var config snykConfig
+	if err := json.Unmarshal(buff, &config); err != nil {
+		return false, err
+	}
+
+	return config.API != "", nil
+}
+
+const (
+	jwksStaging = `{
+  "keys": [
+    {
+      "use": "sig",
+      "kty": "EC",
+      "kid": "yy49bsZVoCPg6PgH1iXtuBlOAMVPsMpNb78iUvqrTn/3iDmS6N5nPVjtpcZqgXyAUl4S6tbihdSSPk3nTsGOxA==",
+      "crv": "P-256",
+      "alg": "ES256",
+      "x": "NjptJx3r6yRl895HksB9pK6UmxGZgRMznkRzQCAnHbg",
+      "y": "RuuhcGfpxiNZ8__hGRkzc-TGxMVOVWThNEj1-tL_Sk0"
+    }
+  ]
+}`
+
+	//	jwksProd = `{
+	//  "keys": [
+	//    {
+	//      "use": "sig",
+	//      "kty": "EC",
+	//      "kid": "/Il5tHgzaqqjh6vp1Je9pG0Ic+s/eRQ7C1dLkmITuop0z8qLNszOuqIJldWSEPitEN/cCW5BKt0buUoVHy9o6A==",
+	//      "crv": "P-256",
+	//      "alg": "ES256",
+	//      "x": "oWouB0UC--Gg7hhYiOKExx2dXVsSdP4t7xfIYbVVXSI",
+	//      "y": "b7WeNOKN2Ur00AFO-8-1o_hdflRCz9gtq-JE-3dFvRU"
+	//    }
+	//  ]
+	//}`
+)

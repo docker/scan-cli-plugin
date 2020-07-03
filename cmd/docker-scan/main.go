@@ -1,15 +1,16 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 
-	"github.com/docker/scan-cli-plugin/config"
-
 	"github.com/docker/cli/cli-plugins/manager"
 	"github.com/docker/cli/cli-plugins/plugin"
 	"github.com/docker/cli/cli/command"
+	registrytypes "github.com/docker/docker/api/types/registry"
+	"github.com/docker/scan-cli-plugin/config"
 	"github.com/docker/scan-cli-plugin/internal"
 	"github.com/docker/scan-cli-plugin/internal/provider"
 	"github.com/spf13/cobra"
@@ -53,17 +54,13 @@ func newScanCmd(dockerCli command.Cli) *cobra.Command {
 		Use:         "scan [OPTIONS] IMAGE",
 		Annotations: map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			scanProvider, err := configureProvider(dockerCli, flags)
-			if err != nil {
-				return err
-			}
 			if flags.showVersion {
-				return runVersion(scanProvider)
+				return runVersion(flags)
 			}
 			if flags.authenticate {
-				return runAuthentication(scanProvider, args)
+				return runAuthentication(flags, args)
 			}
-			return runScan(cmd, scanProvider, args)
+			return runScan(cmd, dockerCli, flags, args)
 		},
 	}
 	cmd.Flags().BoolVar(&flags.authenticate, "auth", false, "Authenticate to the scan provider using an optional token, or web base token if empty")
@@ -76,14 +73,13 @@ func newScanCmd(dockerCli command.Cli) *cobra.Command {
 	return cmd
 }
 
-func configureProvider(dockerCli command.Cli, flags options) (provider.Provider, error) {
+func configureProvider(flags options, options ...provider.SnykProviderOps) (provider.Provider, error) {
 	conf, err := config.ReadConfigFile()
 	if err != nil {
 		return nil, err
 	}
-	opts := []provider.SnykProviderOps{
-		provider.WithPath(conf.Path),
-		provider.WithAuthConfig(dockerCli.ConfigFile().AuthConfigs)}
+	opts := []provider.SnykProviderOps{provider.WithPath(conf.Path)}
+	opts = append(opts, options...)
 	if flags.jsonFormat {
 		opts = append(opts, provider.WithJSON())
 	}
@@ -101,7 +97,12 @@ func configureProvider(dockerCli command.Cli, flags options) (provider.Provider,
 	return provider.NewSnykProvider(opts...)
 }
 
-func runVersion(scanProvider provider.Provider) error {
+func runVersion(flags options) error {
+	scanProvider, err := configureProvider(flags)
+	if err != nil {
+		return err
+	}
+
 	version, err := internal.FullVersion(scanProvider)
 	if err != nil {
 		return err
@@ -110,7 +111,11 @@ func runVersion(scanProvider provider.Provider) error {
 	return nil
 }
 
-func runAuthentication(scanProvider provider.Provider, args []string) error {
+func runAuthentication(flags options, args []string) error {
+	scanProvider, err := configureProvider(flags)
+	if err != nil {
+		return err
+	}
 	token := ""
 	switch {
 	case len(args) == 1:
@@ -121,21 +126,28 @@ func runAuthentication(scanProvider provider.Provider, args []string) error {
 	return scanProvider.Authenticate(token)
 }
 
-func runScan(cmd *cobra.Command, scanProvider provider.Provider, args []string) error {
+func runScan(cmd *cobra.Command, dockerCli command.Cli, flags options, args []string) error {
 	if len(args) != 1 {
 		if err := cmd.Usage(); err != nil {
 			return err
 		}
 		return fmt.Errorf(`"docker scan" requires exactly 1 argument`)
 	}
-
-	err := scanProvider.Scan(args[0])
-	if provider.IsAuthenticationError(err) {
-		return fmt.Errorf(`You need to be logged in to Docker Hub to use scan feature.
-please login to Docker Hub using the Docker Login command`)
+	hubAuthConfig := command.ResolveAuthConfig(context.Background(), dockerCli, hub)
+	scanProvider, err := configureProvider(flags, provider.WithAuthConfig(hubAuthConfig))
+	if err != nil {
+		return err
 	}
+	err = scanProvider.Scan(args[0])
 	if exitError, ok := err.(*exec.ExitError); ok {
 		os.Exit(exitError.ExitCode())
 	}
 	return err
+}
+
+var hub = &registrytypes.IndexInfo{
+	Name:     "docker.io",
+	Mirrors:  nil,
+	Secure:   true,
+	Official: true,
 }

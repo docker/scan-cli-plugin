@@ -18,7 +18,7 @@ require (
 	github.com/containerd/continuity v0.0.0-20200413184840-d3ef23f19fbb // indirect
 	github.com/docker/cli v0.0.0-20200227165822-2298e6a3fe24
 	github.com/docker/distribution v2.7.1+incompatible // indirect
-	github.com/docker/docker v1.14.0-0.20190319215453-e7b5f7dbe98c // indirect
+	github.com/docker/docker v1.14.0-0.20190319215453-e7b5f7dbe98c
 	github.com/docker/docker-credential-helpers v0.6.3 // indirect
 	github.com/docker/go v1.5.1-1 // indirect
 	github.com/docker/go-connections v0.4.0 // indirect
@@ -46,6 +46,8 @@ require (
 	gopkg.in/dancannon/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
 	gopkg.in/gorethink/gorethink.v3 v3.0.5 // indirect
+	gopkg.in/square/go-jose.v2 v2.5.1
+	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.0.2
 	vbom.ml/util v0.0.0-20180919145318-efcd4e0f9787 // indirect
 )

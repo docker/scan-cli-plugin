@@ -34,7 +34,7 @@ func TestScanFailsNoAuthentication(t *testing.T) {
 	defer cleanup()
 
 	// write dockerCli config with authentication to a registry which isn't Hub
-	patchConfig(t, configDir, "com.example.registry")
+	patchConfig(t, configDir, "com.example.registry", "invalid-user", "invalid-password")
 
 	cmd.Command = dockerCli.Command("scan", "example:image")
 	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
@@ -68,11 +68,20 @@ func TestScanSucceedWithDockerHub(t *testing.T) {
 	createScanConfigFile(t, configDir)
 
 	// write dockerCli config with authentication to the Hub
-	patchConfig(t, configDir, "https://index.docker.io/v1/")
+	patchConfig(t, configDir, os.Getenv("E2E_HUB_URL"), os.Getenv("E2E_HUB_USERNAME"), os.Getenv("E2E_HUB_TOKEN"))
 
 	cmd.Command = dockerCli.Command("scan", ImageWithVulnerabilities)
 	output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{ExitCode: 1}).Combined()
 	assert.Assert(t, strings.Contains(output, "vulnerability found"))
+
+	// Check that token file has been created
+	buf, err := ioutil.ReadFile(filepath.Join(configDir, "scan", "scan-id.json"))
+	assert.NilError(t, err)
+	var scanID struct {
+		Identifier string `json:"id"`
+	}
+	assert.NilError(t, json.Unmarshal(buf, &scanID))
+	assert.Equal(t, len(strings.Split(scanID.Identifier, ".")), 3)
 }
 
 func TestScanWithSnyk(t *testing.T) {
@@ -237,13 +246,18 @@ func createSnykConfFile(t *testing.T, token string) (*fs.Dir, func()) {
 	return homeDir, cleanup
 }
 
-func patchConfig(t *testing.T, configDir string, url string) {
+func patchConfig(t *testing.T, configDir, url, userName, password string) {
 	buff, err := ioutil.ReadFile(filepath.Join(configDir, "config.json"))
 	assert.NilError(t, err)
 	var conf configfile.ConfigFile
 	assert.NilError(t, json.Unmarshal(buff, &conf))
 
-	conf.AuthConfigs = map[string]types.AuthConfig{url: {}}
+	conf.AuthConfigs = map[string]types.AuthConfig{
+		url: {
+			Username: userName,
+			Password: password,
+		},
+	}
 	buff, err = json.Marshal(&conf)
 	assert.NilError(t, err)
 
@@ -251,9 +265,9 @@ func patchConfig(t *testing.T, configDir string, url string) {
 }
 
 func createScanConfigFile(t *testing.T, configDir string) {
-	conf := config.Config{Path: fmt.Sprintf("%s/scan/snyk", configDir)}
+	conf := config.Config{Path: filepath.Join(configDir, "scan", "snyk")}
 	buf, err := json.MarshalIndent(conf, "", "  ")
 	assert.NilError(t, err)
-	err = ioutil.WriteFile(fmt.Sprintf("%s/scan/config.json", configDir), buf, 0644)
+	err = ioutil.WriteFile(filepath.Join(configDir, "scan", "config.json"), buf, 0644)
 	assert.NilError(t, err)
 }

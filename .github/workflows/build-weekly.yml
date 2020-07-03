@@ -44,4 +44,7 @@ jobs:
       - name: Build binary and run e2e tests
         env:
           E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
+          E2E_HUB_URL: ${{ secrets.E2E_HUB_URL }}
+          E2E_HUB_USERNAME: ${{ secrets.E2E_HUB_USERNAME }}
+          E2E_HUB_TOKEN_TOKEN: ${{ secrets.E2E_HUB_TOKEN_TOKEN }}
         run: make -f builder.Makefile build test-unit e2e
