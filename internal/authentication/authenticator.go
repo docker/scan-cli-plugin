@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	apiHubBaseUrl = "https://hub.docker.com"
+	apiHubBaseUrl    = "https://hub.docker.com"
 	expirationWindow = -1 * time.Minute
 )
 
@@ -33,7 +33,7 @@ type Authenticator struct {
 // configured to run against Docker Hub prod or staging
 func NewAuthenticator(jwks string) *Authenticator {
 	return &Authenticator{
-		hub:        hubClient{},
+		hub:        hubClient{domain: "https://hub.docker.com"},
 		tokensPath: filepath.Join(cliConfig.Dir(), "scan", "tokens.json"),
 		jwks:       jwks,
 	}
@@ -45,7 +45,7 @@ func (a *Authenticator) GetToken(hubAuthConfig types.AuthConfig) (string, error)
 	// Retrieve token from local storage
 	token, err := a.getLocalToken(hubAuthConfig)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	// Check if the token is well formed and still valid
 	if err := a.checkTokenValidity(token); err == nil {
@@ -54,7 +54,7 @@ func (a *Authenticator) GetToken(hubAuthConfig types.AuthConfig) (string, error)
 	// Fetch a new token from Hub
 	token, err = a.negotiateScanIdToken(hubAuthConfig)
 	if err != nil {
-		return "", nil
+		return "", err
 	}
 	// Persist token on local storage
 	if err := a.updateLocalToken(hubAuthConfig, token); err != nil {

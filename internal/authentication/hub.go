@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/docker/docker/api/types"
-
 )
 
 type hubClient struct {
