@@ -2,25 +2,18 @@ package provider
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
-	"github.com/docker/cli/cli/config/types"
 	"github.com/google/uuid"
-	"github.com/mitchellh/go-homedir"
 )
 
-const dockerHubAuthURL = "https://index.docker.io/v1/"
-
 type snykProvider struct {
-	path  string
-	auths map[string]types.AuthConfig
-	flags []string
+	path        string
+	flags       []string
+	scanIDToken string
 }
 
 type snykConfig struct {
@@ -28,7 +21,6 @@ type snykConfig struct {
 }
 
 // NewSnykProvider returns a Snyk implementation of scan provider
-//path string, authsConfig map[string]types.AuthConfig
 func NewSnykProvider(ops ...SnykProviderOps) (Provider, error) {
 	provider := snykProvider{
 		flags: []string{"test", "--docker"},
@@ -51,14 +43,6 @@ func WithPath(path string) SnykProviderOps {
 			path = p
 		}
 		provider.path = path
-		return nil
-	}
-}
-
-// WithAuthConfig update the Snyk provider with the auths configuration from Docker CLI
-func WithAuthConfig(authsConfig map[string]types.AuthConfig) SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.auths = authsConfig
 		return nil
 	}
 }
@@ -95,6 +79,13 @@ func WithDependencyTree() SnykProviderOps {
 	}
 }
 
+func WithDockerScanIDToken(token string) SnykProviderOps {
+	return func(provider *snykProvider) error {
+		provider.scanIDToken = token
+		return nil
+	}
+}
+
 func (s *snykProvider) Authenticate(token string) error {
 	if token != "" {
 		if _, err := uuid.Parse(token); err != nil {
@@ -108,49 +99,11 @@ func (s *snykProvider) Authenticate(token string) error {
 }
 
 func (s *snykProvider) Scan(image string) error {
-	if ok, err := s.isAuthenticated(s.auths); !ok || err != nil {
-		if err != nil {
-			return err
-		}
-		return &authenticationError{}
-	}
 	cmd := exec.Command(s.path, append(s.flags, image)...)
+	cmd.Env = append(os.Environ(), fmt.Sprintf("SNYK_DOCKER_TOKEN=%s", s.scanIDToken))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return checkCommandErr(cmd.Run())
-}
-
-func (s *snykProvider) isAuthenticated(auths map[string]types.AuthConfig) (bool, error) {
-	if ok := isAuthenticatedOnHub(auths); ok {
-		return true, nil
-	}
-	return isAuthenticatedOnSnyk()
-}
-
-func isAuthenticatedOnHub(auths map[string]types.AuthConfig) bool {
-	_, ok := auths[dockerHubAuthURL]
-	return ok
-}
-
-func isAuthenticatedOnSnyk() (bool, error) {
-	home, err := homedir.Dir()
-	if err != nil {
-		return false, err
-	}
-	snykConfFilePath := filepath.Join(home, ".config", "configstore", "snyk.json")
-	buff, err := ioutil.ReadFile(snykConfFilePath)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, err
-	}
-	var config snykConfig
-	if err := json.Unmarshal(buff, &config); err != nil {
-		return false, err
-	}
-
-	return config.API != "", nil
 }
 
 func (s *snykProvider) Version() (string, error) {
