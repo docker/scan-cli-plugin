@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/docker/docker-scan/internal/authentication"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/scan-cli-plugin/internal/authentication"
 	"github.com/google/uuid"
 	"github.com/mitchellh/go-homedir"
 )
