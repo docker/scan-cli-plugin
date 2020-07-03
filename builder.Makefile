@@ -32,6 +32,10 @@ ifeq ($(GOOS),darwin)
 	SNYK_DOWNLOAD_NAME:=snyk-macos
 endif
 
+ifneq ($(strip $(E2E_TEST_NAME)),)
+	RUN_TEST=-test.run $(E2E_TEST_NAME)
+endif
+
 VARS:= SNYK_DESKTOP_VERSION=${SNYK_DESKTOP_VERSION}\
 	SNYK_USER_VERSION=${SNYK_USER_VERSION}\
 	DOCKER_CONFIG=$(PWD)/docker-config\
@@ -47,7 +51,7 @@ e2e:
 	mkdir -p docker-config/scan
 	mkdir -p docker-config/cli-plugins
 	cp ./bin/${BINARY} docker-config/cli-plugins/${BINARY}
-	$(VARS) gotestsum ./e2e -- -ldflags=$(LDFLAGS)
+	$(VARS) gotestsum ./e2e -- -ldflags=$(LDFLAGS) $(RUN_TEST)
 
 .PHONY: test-unit
 test-unit:
