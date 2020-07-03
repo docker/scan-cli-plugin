@@ -11,7 +11,6 @@ import (
 	"github.com/docker/cli/cli/command"
 	"github.com/docker/docker-scan/config"
 	"github.com/docker/docker-scan/internal"
-	"github.com/docker/docker-scan/internal/authentication"
 	"github.com/docker/docker-scan/internal/provider"
 	registrytypes "github.com/docker/docker/api/types/registry"
 	"github.com/spf13/cobra"
@@ -56,10 +55,10 @@ func newScanCmd(dockerCli command.Cli) *cobra.Command {
 		Annotations: map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if flags.showVersion {
-				return runVersion(dockerCli, flags)
+				return runVersion(flags)
 			}
 			if flags.authenticate {
-				return runAuthentication(dockerCli, flags, args)
+				return runAuthentication(flags, args)
 			}
 			return runScan(cmd, dockerCli, flags, args)
 		},
@@ -74,7 +73,7 @@ func newScanCmd(dockerCli command.Cli) *cobra.Command {
 	return cmd
 }
 
-func configureProvider(dockerCli command.Cli, flags options, options ...provider.SnykProviderOps) (provider.Provider, error) {
+func configureProvider(flags options, options ...provider.SnykProviderOps) (provider.Provider, error) {
 	conf, err := config.ReadConfigFile()
 	if err != nil {
 		return nil, err
@@ -98,8 +97,8 @@ func configureProvider(dockerCli command.Cli, flags options, options ...provider
 	return provider.NewSnykProvider(opts...)
 }
 
-func runVersion(dockerCli command.Cli, flags options) error {
-	scanProvider, err := configureProvider(dockerCli, flags)
+func runVersion(flags options) error {
+	scanProvider, err := configureProvider(flags)
 	if err != nil {
 		return err
 	}
@@ -112,8 +111,8 @@ func runVersion(dockerCli command.Cli, flags options) error {
 	return nil
 }
 
-func runAuthentication(dockerCli command.Cli, flags options, args []string) error {
-	scanProvider, err := configureProvider(dockerCli, flags)
+func runAuthentication(flags options, args []string) error {
+	scanProvider, err := configureProvider(flags)
 	if err != nil {
 		return err
 	}
@@ -134,12 +133,8 @@ func runScan(cmd *cobra.Command, dockerCli command.Cli, flags options, args []st
 		}
 		return fmt.Errorf(`"docker scan" requires exactly 1 argument`)
 	}
-	token, err := getToken(dockerCli)
-	if err != nil {
-		return fmt.Errorf("failed to get DockerScanID: %s", err)
-	}
-
-	scanProvider, err := configureProvider(dockerCli, flags, provider.WithDockerScanIDToken(token))
+	hubAuthConfig := command.ResolveAuthConfig(context.Background(), dockerCli, hub)
+	scanProvider, err := configureProvider(flags, provider.WithAuthConfig(hubAuthConfig))
 	if err != nil {
 		return err
 	}
@@ -150,48 +145,9 @@ func runScan(cmd *cobra.Command, dockerCli command.Cli, flags options, args []st
 	return err
 }
 
-func getToken(dockerCli command.Cli) (string, error) {
-	hubAuthConfig := command.ResolveAuthConfig(context.Background(), dockerCli, hub)
-	if hubAuthConfig.Username == "" {
-		return "", fmt.Errorf(`You need to be logged in to Docker Hub to use scan feature.
-please login to Docker Hub using the Docker Login command`)
-	}
-	authenticator := authentication.NewAuthenticator(jwksStaging)
-	return authenticator.GetToken(hubAuthConfig)
-}
-
 var hub = &registrytypes.IndexInfo{
 	Name:     "docker.io",
 	Mirrors:  nil,
 	Secure:   true,
 	Official: true,
 }
-
-const (
-	jwksStaging = `{
-  "keys": [
-    {
-      "use": "sig",
-      "kty": "EC",
-      "kid": "yy49bsZVoCPg6PgH1iXtuBlOAMVPsMpNb78iUvqrTn/3iDmS6N5nPVjtpcZqgXyAUl4S6tbihdSSPk3nTsGOxA==",
-      "crv": "P-256",
-      "alg": "ES256",
-      "x": "NjptJx3r6yRl895HksB9pK6UmxGZgRMznkRzQCAnHbg",
-      "y": "RuuhcGfpxiNZ8__hGRkzc-TGxMVOVWThNEj1-tL_Sk0"
-    }
-  ]
-}`
-	jwksProd = `{
-  "keys": [
-    {
-      "use": "sig",
-      "kty": "EC",
-      "kid": "/Il5tHgzaqqjh6vp1Je9pG0Ic+s/eRQ7C1dLkmITuop0z8qLNszOuqIJldWSEPitEN/cCW5BKt0buUoVHy9o6A==",
-      "crv": "P-256",
-      "alg": "ES256",
-      "x": "oWouB0UC--Gg7hhYiOKExx2dXVsSdP4t7xfIYbVVXSI",
-      "y": "b7WeNOKN2Ur00AFO-8-1o_hdflRCz9gtq-JE-3dFvRU"
-    }
-  ]
-}`
-)

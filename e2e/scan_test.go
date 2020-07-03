@@ -77,9 +77,11 @@ func TestScanSucceedWithDockerHub(t *testing.T) {
 	// Check that token file has been created
 	buf, err := ioutil.ReadFile(filepath.Join(configDir, "scan", "scan-id.json"))
 	assert.NilError(t, err)
-	var scanID struct{Identifier string `json:"id"`}
-	assert.NilError(t,json.Unmarshal(buf, &scanID))
-	assert.Equal(t, len(strings.Split(scanID.Identifier, ".")), 3 )
+	var scanID struct {
+		Identifier string `json:"id"`
+	}
+	assert.NilError(t, json.Unmarshal(buf, &scanID))
+	assert.Equal(t, len(strings.Split(scanID.Identifier, ".")), 3)
 }
 
 func TestScanWithSnyk(t *testing.T) {
@@ -263,7 +265,7 @@ func patchConfig(t *testing.T, configDir, url, userName, password string) {
 }
 
 func createScanConfigFile(t *testing.T, configDir string) {
-	conf := config.Config{Path: filepath.Join(configDir, "scan", "snyk" )}
+	conf := config.Config{Path: filepath.Join(configDir, "scan", "snyk")}
 	buf, err := json.MarshalIndent(conf, "", "  ")
 	assert.NilError(t, err)
 	err = ioutil.WriteFile(filepath.Join(configDir, "scan", "config.json"), buf, 0644)

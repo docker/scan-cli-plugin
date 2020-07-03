@@ -17,8 +17,8 @@ import (
 )
 
 const (
-	apiHubBaseUrl    = "https://hub.docker.com"
-	expirationWindow = -1 * time.Minute
+	apiHubBaseURL    = "https://hub.docker.com"
+	expirationWindow = 1 * time.Minute
 )
 
 //Authenticator logs on docker Hub and retrieves a DockerScanID
@@ -33,7 +33,7 @@ type Authenticator struct {
 // configured to run against Docker Hub prod or staging
 func NewAuthenticator(jwks string) *Authenticator {
 	return &Authenticator{
-		hub:        hubClient{domain: "https://hub.docker.com"},
+		hub:        hubClient{domain: apiHubBaseURL},
 		tokensPath: filepath.Join(cliConfig.Dir(), "scan", "tokens.json"),
 		jwks:       jwks,
 	}
@@ -43,16 +43,15 @@ func NewAuthenticator(jwks string) *Authenticator {
 // if expired it negotiates a new one on Docker Hub.
 func (a *Authenticator) GetToken(hubAuthConfig types.AuthConfig) (string, error) {
 	// Retrieve token from local storage
-	token, err := a.getLocalToken(hubAuthConfig)
-	if err != nil {
-		return "", err
-	}
+	token := a.getLocalToken(hubAuthConfig)
+
 	// Check if the token is well formed and still valid
 	if err := a.checkTokenValidity(token); err == nil {
 		return token, nil
 	}
 	// Fetch a new token from Hub
-	token, err = a.negotiateScanIdToken(hubAuthConfig)
+	var err error
+	token, err = a.negotiateScanIDToken(hubAuthConfig)
 	if err != nil {
 		return "", err
 	}
@@ -63,16 +62,16 @@ func (a *Authenticator) GetToken(hubAuthConfig types.AuthConfig) (string, error)
 	return token, nil
 }
 
-func (a *Authenticator) getLocalToken(hubAuthConfig types.AuthConfig) (string, error) {
+func (a *Authenticator) getLocalToken(hubAuthConfig types.AuthConfig) string {
 	buf, err := ioutil.ReadFile(a.tokensPath)
 	if errors.Is(err, os.ErrNotExist) {
-		return "", nil
+		return ""
 	}
 	tokens := map[string]string{}
 	if err := json.Unmarshal(buf, &tokens); err != nil {
-		return "", nil
+		return ""
 	}
-	return tokens[hubAuthConfig.Username], nil
+	return tokens[hubAuthConfig.Username]
 }
 
 func (a *Authenticator) checkTokenValidity(token string) error {
@@ -92,7 +91,7 @@ func (a *Authenticator) checkTokenValidity(token string) error {
 	if err := parsedToken.Claims(publicKey, &out); err != nil {
 		return fmt.Errorf("invalid token: signature does not match the content: %s", err)
 	}
-	if err := out.ValidateWithLeeway(jwt.Expected{Time: time.Now()}, expirationWindow); err != nil {
+	if err := out.ValidateWithLeeway(jwt.Expected{Time: time.Now().Add(expirationWindow)}, 0); err != nil {
 		return fmt.Errorf("token has expired: %s", err)
 	}
 	return nil
@@ -121,7 +120,7 @@ func (a *Authenticator) findKey(token *jwt.JSONWebToken) (crypto.PublicKey, erro
 	return nil, fmt.Errorf("invalid token: key identifier does not match")
 }
 
-func (a *Authenticator) negotiateScanIdToken(hubAuthConfig types.AuthConfig) (string, error) {
+func (a *Authenticator) negotiateScanIDToken(hubAuthConfig types.AuthConfig) (string, error) {
 	hubToken, err := a.hub.login(hubAuthConfig)
 	if err != nil {
 		return "", err

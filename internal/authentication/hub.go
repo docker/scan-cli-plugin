@@ -61,7 +61,7 @@ func doRequest(req *http.Request) ([]byte, error) {
 		return nil, err
 	}
 	if resp.Body != nil {
-		defer resp.Body.Close()
+		defer resp.Body.Close() //nolint:errcheck
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("bad status code %q", resp.Status)
