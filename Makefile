@@ -58,6 +58,12 @@ test-unit: test-unit-build ## Run unit tests
 lint: ## Run the go linter
 	@docker build . --target lint
 
+.PHONY: validate
+validate: ## Validate files license header
+	docker run --rm -v $(CURDIR):/work -w /work \
+	 golang:${GO_VERSION} \
+	 bash -c 'go get -u github.com/kunalkushwaha/ltag && ./scripts/validate/fileheader'
+
 .PHONY: help
 help: ## Show help
 	@echo Please specify a build target. The choices are:
