@@ -2,6 +2,7 @@ package provider
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -19,9 +20,10 @@ import (
 )
 
 type snykProvider struct {
-	path  string
-	flags []string
-	auth  types.AuthConfig
+	path    string
+	flags   []string
+	auth    types.AuthConfig
+	context context.Context
 }
 
 // NewSnykProvider returns a Snyk implementation of scan provider
@@ -39,6 +41,14 @@ func NewSnykProvider(ops ...SnykProviderOps) (Provider, error) {
 
 // SnykProviderOps function taking a pointer to a Snyk Provider and returning an error if needed
 type SnykProviderOps func(*snykProvider) error
+
+//WithContext update the Snyk provider with a cancelable context
+func WithContext(ctx context.Context) SnykProviderOps {
+	return func(provider *snykProvider) error {
+		provider.context = ctx
+		return nil
+	}
+}
 
 // WithPath update the Snyk provider with the path from the configuration
 func WithPath(path string) SnykProviderOps {
@@ -97,7 +107,7 @@ func (s *snykProvider) Authenticate(token string) error {
 			return &invalidTokenError{token}
 		}
 	}
-	cmd := exec.Command(s.path, "auth", token)
+	cmd := exec.CommandContext(s.context, s.path, "auth", token)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return checkCommandErr(cmd.Run())
@@ -114,7 +124,7 @@ func (s *snykProvider) Scan(image string) error {
 		}
 	}
 
-	cmd := exec.Command(s.path, append(s.flags, image)...)
+	cmd := exec.CommandContext(s.context, s.path, append(s.flags, image)...)
 	cmd.Env = append(os.Environ(), fmt.Sprintf("SNYK_DOCKER_TOKEN=%s", token))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -132,7 +142,7 @@ please login to Docker Hub using the Docker Login command`)
 }
 
 func (s *snykProvider) Version() (string, error) {
-	cmd := exec.Command(s.path, "--version")
+	cmd := exec.CommandContext(s.context, s.path, "--version")
 	buff := bytes.NewBuffer(nil)
 	buffErr := bytes.NewBuffer(nil)
 	cmd.Stdout = buff

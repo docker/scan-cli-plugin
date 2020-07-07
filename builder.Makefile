@@ -51,7 +51,7 @@ e2e:
 	mkdir -p docker-config/scan
 	mkdir -p docker-config/cli-plugins
 	cp ./bin/${BINARY} docker-config/cli-plugins/${BINARY}
-	$(VARS) gotestsum ./e2e -- -ldflags=$(LDFLAGS) $(RUN_TEST)
+	$(VARS) gotestsum ./e2e $(RUN_TEST) -- -ldflags=$(LDFLAGS)
 
 .PHONY: test-unit
 test-unit:
