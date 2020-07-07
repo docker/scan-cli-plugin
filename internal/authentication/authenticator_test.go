@@ -13,10 +13,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/docker/docker/api/types"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
-
-	"github.com/docker/docker/api/types"
 	"gotest.tools/v3/assert"
 	"gotest.tools/v3/fs"
 )
@@ -46,8 +45,7 @@ func TestHubAuthenticateNegociatesToken(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	authenticator := NewAuthenticator("")
-	authenticator.hub.domain = ts.URL
+	authenticator := NewAuthenticator("", ts.URL)
 	token, err := authenticator.negotiateScanIDToken(authConfig)
 	assert.NilError(t, err)
 	assert.Equal(t, token, "XXXX.YYYY.ZZZZ")
@@ -93,7 +91,7 @@ func TestHubAuthenticateChecksTokenValidity(t *testing.T) {
 			}
 			defer dir.Remove()
 
-			authenticator := NewAuthenticator("")
+			authenticator := NewAuthenticator("", "")
 			authenticator.tokensPath = dir.Join("tokens.json")
 
 			authConfig := types.AuthConfig{Username: "hubUser2"}
@@ -136,7 +134,7 @@ func TestUpdateLocalToken(t *testing.T) {
 			}
 			defer dir.Remove()
 
-			authenticator := NewAuthenticator("")
+			authenticator := NewAuthenticator("", "")
 			authenticator.tokensPath = dir.Join("tokens.json")
 
 			authConfig := types.AuthConfig{Username: "hubUser1"}
@@ -222,7 +220,7 @@ func TestCheckTokenValidity(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			authenticator := NewAuthenticator(string(jwks))
+			authenticator := NewAuthenticator(string(jwks), "")
 			err := authenticator.checkTokenValidity(testCase.generateToken())
 			if testCase.expectedError == "" {
 				assert.NilError(t, err)
