@@ -32,7 +32,7 @@ func TestHubAuthenticateNegociatesToken(t *testing.T) {
 			var actualAuthConfig types.AuthConfig
 			assert.NilError(t, json.Unmarshal(buf, &actualAuthConfig))
 			assert.DeepEqual(t, actualAuthConfig, authConfig)
-			fmt.Fprint(w, `{"content":"hub-content"}`)
+			fmt.Fprint(w, `{"token":"hub-content"}`)
 
 		case "/v2/scan/provider/content":
 			assert.Equal(t, r.Method, http.MethodGet)
