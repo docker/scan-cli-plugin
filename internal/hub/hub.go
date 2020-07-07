@@ -35,7 +35,7 @@ func (h *Client) Login(hubAuthConfig types.AuthConfig) (string, error) {
 	}
 
 	creds := struct {
-		Token string `json:"content"`
+		Token string `json:"token"`
 	}{}
 	if err := json.Unmarshal(buf, &creds); err != nil {
 		return "", err
