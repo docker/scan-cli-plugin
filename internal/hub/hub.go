@@ -1,4 +1,4 @@
-package authentication
+package hub
 
 import (
 	"bytes"
@@ -10,11 +10,13 @@ import (
 	"github.com/docker/docker/api/types"
 )
 
-type hubClient struct {
-	domain string
+//Client sends authenticates on Hub and sends requests to the API
+type Client struct {
+	Domain string
 }
 
-func (h *hubClient) login(hubAuthConfig types.AuthConfig) (string, error) {
+//Login logs into Hub and returns the auth token
+func (h *Client) Login(hubAuthConfig types.AuthConfig) (string, error) {
 	data, err := json.Marshal(hubAuthConfig)
 	if err != nil {
 		return "", err
@@ -22,7 +24,7 @@ func (h *hubClient) login(hubAuthConfig types.AuthConfig) (string, error) {
 	body := bytes.NewBuffer(data)
 
 	// Login on the Docker Hub
-	req, err := http.NewRequest("POST", h.domain+"/v2/users/login", ioutil.NopCloser(body))
+	req, err := http.NewRequest("POST", h.Domain+"/v2/users/login", ioutil.NopCloser(body))
 	if err != nil {
 		return "", err
 	}
@@ -41,8 +43,9 @@ func (h *hubClient) login(hubAuthConfig types.AuthConfig) (string, error) {
 	return creds.Token, nil
 }
 
-func (h *hubClient) getScanID(hubToken string) (string, error) {
-	req, err := http.NewRequest("GET", h.domain+"/v2/scan/provider/content", nil)
+//GetScanID calls the scan service which returns a DockerScanID as a JWT token
+func (h *Client) GetScanID(hubToken string) (string, error) {
+	req, err := http.NewRequest("GET", h.Domain+"/v2/scan/provider/content", nil)
 	if err != nil {
 		return "", err
 	}

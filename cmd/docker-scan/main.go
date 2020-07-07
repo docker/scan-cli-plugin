@@ -9,7 +9,8 @@ import (
 	"github.com/docker/cli/cli-plugins/manager"
 	"github.com/docker/cli/cli-plugins/plugin"
 	"github.com/docker/cli/cli/command"
-	registrytypes "github.com/docker/docker/api/types/registry"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/scan-cli-plugin/config"
 	"github.com/docker/scan-cli-plugin/internal"
 	"github.com/docker/scan-cli-plugin/internal/provider"
@@ -78,7 +79,9 @@ func configureProvider(flags options, options ...provider.SnykProviderOps) (prov
 	if err != nil {
 		return nil, err
 	}
-	opts := []provider.SnykProviderOps{provider.WithPath(conf.Path)}
+	opts := []provider.SnykProviderOps{
+		provider.WithPath(conf.Path),
+	}
 	opts = append(opts, options...)
 	if flags.jsonFormat {
 		opts = append(opts, provider.WithJSON())
@@ -133,8 +136,9 @@ func runScan(cmd *cobra.Command, dockerCli command.Cli, flags options, args []st
 		}
 		return fmt.Errorf(`"docker scan" requires exactly 1 argument`)
 	}
-	hubAuthConfig := command.ResolveAuthConfig(context.Background(), dockerCli, hub)
-	scanProvider, err := configureProvider(flags, provider.WithAuthConfig(hubAuthConfig))
+	scanProvider, err := configureProvider(flags, provider.WithAuthConfig(func(hub *registry.IndexInfo) types.AuthConfig {
+		return command.ResolveAuthConfig(context.Background(), dockerCli, hub)
+	}))
 	if err != nil {
 		return err
 	}
@@ -143,11 +147,4 @@ func runScan(cmd *cobra.Command, dockerCli command.Cli, flags options, args []st
 		os.Exit(exitError.ExitCode())
 	}
 	return err
-}
-
-var hub = &registrytypes.IndexInfo{
-	Name:     "docker.io",
-	Mirrors:  nil,
-	Secure:   true,
-	Official: true,
 }

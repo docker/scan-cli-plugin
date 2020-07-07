@@ -12,28 +12,28 @@ import (
 
 	cliConfig "github.com/docker/cli/cli/config"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/scan-cli-plugin/internal/hub"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
 const (
-	apiHubBaseURL    = "https://hub.docker.com"
 	expirationWindow = 1 * time.Minute
 )
 
 //Authenticator logs on docker Hub and retrieves a DockerScanID
 // if the one stored locally has expired
 type Authenticator struct {
-	hub        hubClient
+	hub        hub.Client
 	tokensPath string
 	jwks       string
 }
 
 //NewAuthenticator returns an Authenticator
 // configured to run against Docker Hub prod or staging
-func NewAuthenticator(jwks string) *Authenticator {
+func NewAuthenticator(jwks, apiHubBaseURL string) *Authenticator {
 	return &Authenticator{
-		hub:        hubClient{domain: apiHubBaseURL},
+		hub:        hub.Client{Domain: apiHubBaseURL},
 		tokensPath: filepath.Join(cliConfig.Dir(), "scan", "tokens.json"),
 		jwks:       jwks,
 	}
@@ -121,11 +121,11 @@ func (a *Authenticator) findKey(token *jwt.JSONWebToken) (crypto.PublicKey, erro
 }
 
 func (a *Authenticator) negotiateScanIDToken(hubAuthConfig types.AuthConfig) (string, error) {
-	hubToken, err := a.hub.login(hubAuthConfig)
+	hubToken, err := a.hub.Login(hubAuthConfig)
 	if err != nil {
 		return "", err
 	}
-	return a.hub.getScanID(hubToken)
+	return a.hub.GetScanID(hubToken)
 }
 
 func (a *Authenticator) updateLocalToken(hubAuthConfig types.AuthConfig, token string) error {
