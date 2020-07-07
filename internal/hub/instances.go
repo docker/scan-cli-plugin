@@ -1,16 +1,21 @@
 package hub
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 	"os"
 
 	"github.com/docker/docker/api/types/registry"
+	"gopkg.in/square/go-jose.v2"
 )
 
 //Instance stores all the specific pieces needed to dialog with Hub
 type Instance struct {
 	APIHubBaseURL string
+	JwksURL       string
 	RegistryInfo  *registry.IndexInfo
-	JWKS          string
 }
 
 //GetInstance returns the current hub instance, which can be overridden by
@@ -27,6 +32,33 @@ func GetInstance() *Instance {
 	}
 }
 
+//FetchJwks fetches a jwks.json file and parses it
+func (i *Instance) FetchJwks() (jose.JSONWebKeySet, error) {
+	// fetch jwks.json file from URL
+	resp, err := http.Get(i.JwksURL)
+	if err != nil {
+		return jose.JSONWebKeySet{}, fmt.Errorf("failed to fetch JWKS: %s", err)
+	}
+	if resp.StatusCode < http.StatusOK && resp.StatusCode >= 300 {
+		return jose.JSONWebKeySet{}, fmt.Errorf("failed to fetch JWKS: invalid status code %v", resp.StatusCode)
+	}
+	if resp.Body == nil {
+		return jose.JSONWebKeySet{}, fmt.Errorf("failed to fetch JWKS: invalid jwks.json file")
+	}
+	defer resp.Body.Close() //nolint: errcheck
+
+	// Read and parse jwks.json file
+	buf, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return jose.JSONWebKeySet{}, fmt.Errorf("failed to read JWKS: %s", err)
+	}
+	var keySet jose.JSONWebKeySet
+	if err := json.Unmarshal(buf, &keySet); err != nil {
+		return jose.JSONWebKeySet{}, fmt.Errorf("invalid JWKS: %s", err)
+	}
+	return keySet, nil
+}
+
 var (
 	staging = Instance{
 		APIHubBaseURL: "https://hub-stage.docker.com",
@@ -36,19 +68,7 @@ var (
 			Secure:   true,
 			Official: false,
 		},
-		JWKS: `{
-  "keys": [
-    {
-      "use": "sig",
-      "kty": "EC",
-      "kid": "yy49bsZVoCPg6PgH1iXtuBlOAMVPsMpNb78iUvqrTn/3iDmS6N5nPVjtpcZqgXyAUl4S6tbihdSSPk3nTsGOxA==",
-      "crv": "P-256",
-      "alg": "ES256",
-      "x": "NjptJx3r6yRl895HksB9pK6UmxGZgRMznkRzQCAnHbg",
-      "y": "RuuhcGfpxiNZ8__hGRkzc-TGxMVOVWThNEj1-tL_Sk0"
-    }
-  ]
-}`,
+		JwksURL: "https://jwt-stage.docker.com/scan/.well-known/jwks.json",
 	}
 
 	prod = Instance{
@@ -59,18 +79,6 @@ var (
 			Secure:   true,
 			Official: true,
 		},
-		JWKS: `{
- "keys": [
-   {
-     "use": "sig",
-     "kty": "EC",
-     "kid": "/Il5tHgzaqqjh6vp1Je9pG0Ic+s/eRQ7C1dLkmITuop0z8qLNszOuqIJldWSEPitEN/cCW5BKt0buUoVHy9o6A==",
-     "crv": "P-256",
-     "alg": "ES256",
-     "x": "oWouB0UC--Gg7hhYiOKExx2dXVsSdP4t7xfIYbVVXSI",
-     "y": "b7WeNOKN2Ur00AFO-8-1o_hdflRCz9gtq-JE-3dFvRU"
-   }
- ]
-}`,
+		JwksURL: "https://jwt.docker.com/scan/.well-known/jwks.json",
 	}
 )

@@ -137,7 +137,11 @@ func (s *snykProvider) getToken() (string, error) {
 please login to Docker Hub using the Docker Login command`)
 	}
 	h := hub.GetInstance()
-	authenticator := authentication.NewAuthenticator(h.JWKS, h.APIHubBaseURL)
+	jwks, err := h.FetchJwks()
+	if err != nil {
+		return "", err
+	}
+	authenticator := authentication.NewAuthenticator(jwks, h.APIHubBaseURL)
 	return authenticator.GetToken(s.auth)
 }
 
