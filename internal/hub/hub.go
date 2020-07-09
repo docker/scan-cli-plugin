@@ -45,7 +45,7 @@ func (h *Client) Login(hubAuthConfig types.AuthConfig) (string, error) {
 
 //GetScanID calls the scan service which returns a DockerScanID as a JWT token
 func (h *Client) GetScanID(hubToken string) (string, error) {
-	req, err := http.NewRequest("GET", h.Domain+"/v2/scan/provider/content", nil)
+	req, err := http.NewRequest("GET", h.Domain+"/v2/scan/provider/token", nil)
 	if err != nil {
 		return "", err
 	}
