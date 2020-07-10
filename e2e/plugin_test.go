@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 	"testing"
@@ -35,6 +36,9 @@ func TestInvokePluginFromCLI(t *testing.T) {
 }
 
 func TestHandleCtrlCGracefully(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows platform does not handle SIGINT")
+	}
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
 
@@ -48,11 +52,11 @@ sleep 1000`), 0700))
 	defer env.Patch(t, "PATH", fmt.Sprintf(pathFormat(), configDir+"/scan", path))()
 
 	cmd.Command = dockerCli.Command("scan", "--version")
-	resultCmd := icmd.StartCmd(cmd)
+	icmd.StartCmd(cmd)
 	time.Sleep(1 * time.Second)
 
 	// Snyk command should be running
-	scanProcess := shouldProcessBeRunning(t, "docker-scan", true, resultCmd.Cmd.Process.Pid)
+	scanProcess := shouldProcessBeRunning(t, "docker-scan", true, 0)
 	sp, err := os.FindProcess(scanProcess.Pid())
 	assert.NilError(t, err)
 
@@ -71,9 +75,11 @@ func shouldProcessBeRunning(t *testing.T, executable string, running bool, PPID 
 	processes, err := ps.Processes()
 	assert.NilError(t, err)
 	for _, process := range processes {
-		if strings.HasPrefix(process.Executable(), executable) {
+		if strings.HasPrefix(process.Executable(), executable) || (PPID != 0 && process.PPid() == PPID) {
 			assert.Assert(t, process.Pid() != 0)
-			assert.Equal(t, process.PPid(), PPID) // snyk is the child process of docker scan
+			if PPID != 0 {
+				assert.Equal(t, process.PPid(), PPID) // snyk is the child process of docker scan
+			}
 			assert.Assert(t, running)
 			return process
 		}
