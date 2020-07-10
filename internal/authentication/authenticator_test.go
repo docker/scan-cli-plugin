@@ -45,7 +45,7 @@ func TestHubAuthenticateNegociatesToken(t *testing.T) {
 	}))
 	defer ts.Close()
 
-	authenticator := NewAuthenticator("", ts.URL)
+	authenticator := NewAuthenticator(jose.JSONWebKeySet{}, ts.URL)
 	token, err := authenticator.negotiateScanIDToken(authConfig)
 	assert.NilError(t, err)
 	assert.Equal(t, token, "XXXX.YYYY.ZZZZ")
@@ -91,7 +91,7 @@ func TestHubAuthenticateChecksTokenValidity(t *testing.T) {
 			}
 			defer dir.Remove()
 
-			authenticator := NewAuthenticator("", "")
+			authenticator := NewAuthenticator(jose.JSONWebKeySet{}, "")
 			authenticator.tokensPath = dir.Join("tokens.json")
 
 			authConfig := types.AuthConfig{Username: "hubUser2"}
@@ -134,7 +134,7 @@ func TestUpdateLocalToken(t *testing.T) {
 			}
 			defer dir.Remove()
 
-			authenticator := NewAuthenticator("", "")
+			authenticator := NewAuthenticator(jose.JSONWebKeySet{}, "")
 			authenticator.tokensPath = dir.Join("tokens.json")
 
 			authConfig := types.AuthConfig{Username: "hubUser1"}
@@ -151,14 +151,16 @@ func TestUpdateLocalToken(t *testing.T) {
 func TestCheckTokenValidity(t *testing.T) {
 	// Generate JWKS file containing the public key
 	privateKey, _ := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	jwk := jose.JSONWebKey{
-		Key:       privateKey.Public(),
-		KeyID:     "key-id",
-		Algorithm: string(jose.ES256),
-		Use:       "sig",
+	jwks := jose.JSONWebKeySet{
+		Keys: []jose.JSONWebKey{
+			{
+				Key:       privateKey.Public(),
+				KeyID:     "key-id",
+				Algorithm: string(jose.ES256),
+				Use:       "sig",
+			},
+		},
 	}
-	jwks, err := json.MarshalIndent(jose.JSONWebKeySet{Keys: []jose.JSONWebKey{jwk}}, "", "  ")
-	assert.NilError(t, err)
 
 	// Generate JWT token
 	sig := newSigner(t, privateKey, "key-id")
@@ -220,7 +222,7 @@ func TestCheckTokenValidity(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			authenticator := NewAuthenticator(string(jwks), "")
+			authenticator := NewAuthenticator(jwks, "")
 			err := authenticator.checkTokenValidity(testCase.generateToken())
 			if testCase.expectedError == "" {
 				assert.NilError(t, err)

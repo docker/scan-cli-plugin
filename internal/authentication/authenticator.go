@@ -26,12 +26,12 @@ const (
 type Authenticator struct {
 	hub        hub.Client
 	tokensPath string
-	jwks       string
+	jwks       jose.JSONWebKeySet
 }
 
 //NewAuthenticator returns an Authenticator
 // configured to run against Docker Hub prod or staging
-func NewAuthenticator(jwks, apiHubBaseURL string) *Authenticator {
+func NewAuthenticator(jwks jose.JSONWebKeySet, apiHubBaseURL string) *Authenticator {
 	return &Authenticator{
 		hub:        hub.Client{Domain: apiHubBaseURL},
 		tokensPath: filepath.Join(cliConfig.Dir(), "scan", "tokens.json"),
@@ -98,10 +98,6 @@ func (a *Authenticator) checkTokenValidity(token string) error {
 }
 
 func (a *Authenticator) findKey(token *jwt.JSONWebToken) (crypto.PublicKey, error) {
-	jwks := jose.JSONWebKeySet{}
-	if err := json.Unmarshal([]byte(a.jwks), &jwks); err != nil {
-		return nil, err
-	}
 	var kid string
 	for _, header := range token.Headers {
 		if header.KeyID != "" {
@@ -112,7 +108,7 @@ func (a *Authenticator) findKey(token *jwt.JSONWebToken) (crypto.PublicKey, erro
 	if kid == "" {
 		return nil, fmt.Errorf("invalid token: key identifier does not match")
 	}
-	for _, key := range jwks.Keys {
+	for _, key := range a.jwks.Keys {
 		if key.KeyID == kid {
 			return key.Public(), nil
 		}
