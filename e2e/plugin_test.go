@@ -36,9 +36,6 @@ func TestInvokePluginFromCLI(t *testing.T) {
 }
 
 func TestHandleCtrlCGracefully(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("Windows platform does not handle SIGINT")
-	}
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
 
@@ -63,7 +60,14 @@ sleep 1000`), 0700))
 	shouldProcessBeRunning(t, "snyk", true, scanProcess.Pid())
 
 	// send interrupt signal to the docker scan --version command
-	assert.NilError(t, sp.Signal(syscall.SIGINT))
+	switch runtime.GOOS {
+	case "windows":
+		assert.NilError(t, sp.Kill()) // windows can't handle SIGINT
+	case "darwin", "linux":
+		assert.NilError(t, sp.Signal(syscall.SIGINT))
+	default:
+		t.Fatalf("os %q not supported", runtime.GOOS)
+	}
 	time.Sleep(1 * time.Second)
 
 	// Snyk command should be terminated too
