@@ -281,7 +281,14 @@ func patchConfig(t *testing.T, configDir, url, userName, password string) {
 }
 
 func createScanConfigFile(t *testing.T, configDir string) {
-	conf := config.Config{Path: filepath.Join(configDir, "scan", "snyk")}
+	createScanConfigFileOptin(t, configDir, true)
+}
+
+func createScanConfigFileOptin(t *testing.T, configDir string, optin bool) {
+	conf := config.Config{
+		Path:  filepath.Join(configDir, "scan", "snyk"),
+		Optin: optin,
+	}
 	buf, err := json.MarshalIndent(conf, "", "  ")
 	assert.NilError(t, err)
 	err = ioutil.WriteFile(filepath.Join(configDir, "scan", "config.json"), buf, 0644)
