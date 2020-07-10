@@ -34,7 +34,7 @@ func TestHubAuthenticateNegociatesToken(t *testing.T) {
 			assert.DeepEqual(t, actualAuthConfig, authConfig)
 			fmt.Fprint(w, `{"token":"hub-content"}`)
 
-		case "/v2/scan/provider/content":
+		case "/v2/scan/provider/token":
 			assert.Equal(t, r.Method, http.MethodGet)
 			assert.Equal(t, r.Header.Get("Authorization"), "Bearer hub-content")
 			fmt.Fprint(w, `XXXX.YYYY.ZZZZ`)
