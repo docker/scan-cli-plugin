@@ -10,6 +10,13 @@ import (
 	"github.com/docker/docker/api/types"
 )
 
+const (
+	// LoginURL path to the Hub login URL
+	LoginURL = "/v2/users/login"
+	// ScanTokenURL path to the Hub provider token generation URL
+	ScanTokenURL = "/api/scan/v1/provider/token"
+)
+
 //Client sends authenticates on Hub and sends requests to the API
 type Client struct {
 	Domain string
@@ -24,7 +31,7 @@ func (h *Client) Login(hubAuthConfig types.AuthConfig) (string, error) {
 	body := bytes.NewBuffer(data)
 
 	// Login on the Docker Hub
-	req, err := http.NewRequest("POST", h.Domain+"/v2/users/login", ioutil.NopCloser(body))
+	req, err := http.NewRequest("POST", h.Domain+LoginURL, ioutil.NopCloser(body))
 	if err != nil {
 		return "", err
 	}
@@ -45,7 +52,7 @@ func (h *Client) Login(hubAuthConfig types.AuthConfig) (string, error) {
 
 //GetScanID calls the scan service which returns a DockerScanID as a JWT token
 func (h *Client) GetScanID(hubToken string) (string, error) {
-	req, err := http.NewRequest("GET", h.Domain+"/v2/scan/provider/token", nil)
+	req, err := http.NewRequest("GET", h.Domain+ScanTokenURL, nil)
 	if err != nil {
 		return "", err
 	}

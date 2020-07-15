@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types"
+	"github.com/docker/scan-cli-plugin/internal/hub"
 	"gopkg.in/square/go-jose.v2"
 	"gopkg.in/square/go-jose.v2/jwt"
 	"gotest.tools/v3/assert"
@@ -25,7 +26,7 @@ func TestHubAuthenticateNegociatesToken(t *testing.T) {
 
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.String() {
-		case "/v2/users/login":
+		case hub.LoginURL:
 			assert.Equal(t, r.Method, http.MethodPost)
 			buf, err := ioutil.ReadAll(r.Body)
 			assert.NilError(t, err)
@@ -34,7 +35,7 @@ func TestHubAuthenticateNegociatesToken(t *testing.T) {
 			assert.DeepEqual(t, actualAuthConfig, authConfig)
 			fmt.Fprint(w, `{"token":"hub-content"}`)
 
-		case "/v2/scan/provider/token":
+		case hub.ScanTokenURL:
 			assert.Equal(t, r.Method, http.MethodGet)
 			assert.Equal(t, r.Header.Get("Authorization"), "Bearer hub-content")
 			fmt.Fprint(w, `XXXX.YYYY.ZZZZ`)
