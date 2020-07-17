@@ -17,7 +17,7 @@ E2E_ENV := --env E2E_TEST_AUTH_TOKEN \
            --env E2E_TEST_NAME
 
 .PHONY: all
-all: lint build test
+all: lint validate build test
 
 .PHONY: build
 build: ## Build docker-scan in a container
