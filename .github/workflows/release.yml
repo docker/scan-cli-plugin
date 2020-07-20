@@ -1,9 +1,14 @@
 name: release
-
 on:
-  push:
-    tags:
-      - 'v*'
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch'
+        required: true
+        default: 'main'
+      tag:
+        description: 'Release Tag'
+        required: true
 
 jobs:
   release:
@@ -16,9 +21,6 @@ jobs:
 
       - name: Docker version
         run: docker version
-
-      - name: TagName
-        uses: olegtarasov/get-tag@v2
 
       - name: Checkout
         uses: actions/checkout@v2
@@ -49,3 +51,4 @@ jobs:
           prerelease: true
           draft: true
           token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.event.inputs.tag }}
