@@ -29,7 +29,8 @@ import (
 
 // Config points to scan provider's binary
 type Config struct {
-	Path string `json:"path"`
+	Path  string `json:"path"`
+	Optin bool   `json:"optin"`
 }
 
 // ReadConfigFile tries to read docker-scan configuration file that
@@ -48,4 +49,15 @@ func ReadConfigFile() (Config, error) {
 		return conf, errors.Wrapf(err, "invalid docker scan configuration file %s", path)
 	}
 	return conf, nil
+}
+
+// SaveConfigFile tries to save docker-scan configuration file that
+// should be at ${DOCKER_CONFIG}/scan/config.json
+func SaveConfigFile(conf Config) error {
+	out, err := json.Marshal(conf)
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(cliConfig.Dir(), "scan", "config.json")
+	return errors.Wrap(ioutil.WriteFile(path, out, os.FileMode(644)), "failed to write docker scan configuration file")
 }

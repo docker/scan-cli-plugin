@@ -31,6 +31,7 @@ import (
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/scan-cli-plugin/config"
 	"github.com/docker/scan-cli-plugin/internal"
+	"github.com/docker/scan-cli-plugin/internal/optin"
 	"github.com/docker/scan-cli-plugin/internal/provider"
 	"github.com/spf13/cobra"
 )
@@ -76,10 +77,10 @@ func newScanCmd(ctx context.Context, dockerCli command.Cli) *cobra.Command {
 		Annotations: map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if flags.showVersion {
-				return runVersion(ctx, flags)
+				return runVersion(ctx, dockerCli, flags)
 			}
 			if flags.authenticate {
-				return runAuthentication(ctx, flags, args)
+				return runAuthentication(ctx, dockerCli, flags, args)
 			}
 			return runScan(ctx, cmd, dockerCli, flags, args)
 		},
@@ -94,10 +95,24 @@ func newScanCmd(ctx context.Context, dockerCli command.Cli) *cobra.Command {
 	return cmd
 }
 
-func configureProvider(ctx context.Context, flags options, options ...provider.SnykProviderOps) (provider.Provider, error) {
+func configureProvider(ctx context.Context, dockerCli command.Streams, flags options, options ...provider.SnykProviderOps) (provider.Provider, error) {
 	conf, err := config.ReadConfigFile()
 	if err != nil {
 		return nil, err
+	}
+
+	if !conf.Optin {
+		answer, err := optin.AskForConsent(optin.TerminalStdio(dockerCli.In(), dockerCli.Out(), dockerCli.Err()))
+		if err != nil {
+			return nil, err
+		}
+		conf.Optin = answer
+		if err := config.SaveConfigFile(conf); err != nil {
+			return nil, err
+		}
+		if !answer {
+			os.Exit(0)
+		}
 	}
 
 	opts := []provider.SnykProviderOps{
@@ -122,8 +137,8 @@ func configureProvider(ctx context.Context, flags options, options ...provider.S
 	return provider.NewSnykProvider(opts...)
 }
 
-func runVersion(ctx context.Context, flags options) error {
-	scanProvider, err := configureProvider(ctx, flags)
+func runVersion(ctx context.Context, dockerCli command.Streams, flags options) error {
+	scanProvider, err := configureProvider(ctx, dockerCli, flags)
 	if err != nil {
 		return err
 	}
@@ -136,8 +151,8 @@ func runVersion(ctx context.Context, flags options) error {
 	return nil
 }
 
-func runAuthentication(ctx context.Context, flags options, args []string) error {
-	scanProvider, err := configureProvider(ctx, flags)
+func runAuthentication(ctx context.Context, dockerCli command.Streams, flags options, args []string) error {
+	scanProvider, err := configureProvider(ctx, dockerCli, flags)
 	if err != nil {
 		return err
 	}
@@ -158,7 +173,7 @@ func runScan(ctx context.Context, cmd *cobra.Command, dockerCli command.Cli, fla
 		}
 		return fmt.Errorf(`"docker scan" requires exactly 1 argument`)
 	}
-	scanProvider, err := configureProvider(ctx, flags, provider.WithAuthConfig(func(hub *registry.IndexInfo) types.AuthConfig {
+	scanProvider, err := configureProvider(ctx, dockerCli, flags, provider.WithAuthConfig(func(hub *registry.IndexInfo) types.AuthConfig {
 		return command.ResolveAuthConfig(context.Background(), dockerCli, hub)
 	}))
 	if err != nil {
