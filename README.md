@@ -1,4 +1,4 @@
-[![Nightly Build](https://github.com/docker/scan-cli-plugin/workflows/Nightly%20Build/badge.svg)](https://github.com/docker/scan-cli-plugin/actions?query=workflow%3A%22Nightly+Build%22)
+[![Weekly Build](![Weekly Build](https://github.com/docker/scan-cli-plugin/workflows/Weekly%20Build/badge.svg))](https://github.com/docker/scan-cli-plugin/actions?query=workflow%3A%22Weekly+Build%22)
 
 # docker-scan
 Snyk CLI Plugin PoC

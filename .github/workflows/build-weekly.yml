@@ -49,3 +49,15 @@ jobs:
           E2E_HUB_USERNAME: ${{ secrets.E2E_HUB_USERNAME }}
           E2E_HUB_TOKEN_TOKEN: ${{ secrets.E2E_HUB_TOKEN_TOKEN }}
         run: make -f builder.Makefile build test-unit e2e
+      - name: ON SUCCESS - Slack notification
+        if: ${{ success() }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":":heavy_check_mark: docker scan cli plugin Weekly Build SUCCESS on ${{ matrix.os}}"}' ${{ secrets.SLACK_WEBHOOK }}
+      - name: ON FAILURE - Slack notification
+        if: ${{ failure() }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"@here :no_entry_sign: docker scan cli plugin Weekly Build FAILED on ${{ matrix.os}}"}' ${{ secrets.SLACK_WEBHOOK }}
+      - name: ON CANCELLED - Slack notification
+        if: ${{ cancelled() }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":":bangbang: docker scan cli plugin Weekly Build CANCELED on ${{ matrix.os}}"}' ${{ secrets.SLACK_WEBHOOK }}
