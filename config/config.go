@@ -58,6 +58,10 @@ func SaveConfigFile(conf Config) error {
 	if err != nil {
 		return err
 	}
+	if err = os.MkdirAll(filepath.Join(cliConfig.Dir(), "scan"), 0744); err != nil {
+		return errors.Wrap(err, "failed to create docker scan configuration directory")
+	}
+
 	path := filepath.Join(cliConfig.Dir(), "scan", "config.json")
 	return errors.Wrap(ioutil.WriteFile(path, out, os.FileMode(644)), "failed to write docker scan configuration file")
 }
