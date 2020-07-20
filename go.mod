@@ -31,6 +31,7 @@ require (
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
 	github.com/jinzhu/gorm v1.9.12 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
+	github.com/kunalkushwaha/ltag v0.2.2 // indirect
 	github.com/lib/pq v1.5.2 // indirect
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
 	github.com/miekg/pkcs11 v1.0.3 // indirect
@@ -48,7 +49,6 @@ require (
 	gopkg.in/fatih/pool.v2 v2.0.0 // indirect
 	gopkg.in/gorethink/gorethink.v3 v3.0.5 // indirect
 	gopkg.in/square/go-jose.v2 v2.5.1
-	gotest.tools v2.2.0+incompatible
 	gotest.tools/v3 v3.0.2
 	vbom.ml/util v0.0.0-20180919145318-efcd4e0f9787 // indirect
 )

@@ -1,3 +1,16 @@
+#   Copyright 2020 Docker Inc.
+
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+
+#       http://www.apache.org/licenses/LICENSE-2.0
+
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
 include vars.mk
 export DOCKER_BUILDKIT=1
 
@@ -17,7 +30,7 @@ E2E_ENV := --env E2E_TEST_AUTH_TOKEN \
            --env E2E_TEST_NAME
 
 .PHONY: all
-all: lint build test
+all: lint validate build test
 
 .PHONY: build
 build: ## Build docker-scan in a container
@@ -57,6 +70,12 @@ test-unit: test-unit-build ## Run unit tests
 .PHONY: lint
 lint: ## Run the go linter
 	@docker build . --target lint
+
+.PHONY: validate
+validate: ## Validate files license header
+	docker run --rm -v $(CURDIR):/work -w /work \
+	 golang:${GO_VERSION} \
+	 bash -c 'go get -u github.com/kunalkushwaha/ltag && ./scripts/validate/fileheader'
 
 .PHONY: help
 help: ## Show help
