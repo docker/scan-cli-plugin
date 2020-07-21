@@ -88,6 +88,8 @@ please login to Docker Hub using the Docker Login command`,
 	})
 }
 
+const callToAction = "sign in with a Snyk account"
+
 func TestScanSucceedWithDockerHub(t *testing.T) {
 	t.Skip("TODO: waiting for Hub ID generation")
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
@@ -101,6 +103,8 @@ func TestScanSucceedWithDockerHub(t *testing.T) {
 	cmd.Command = dockerCli.Command("scan", ImageWithVulnerabilities)
 	output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{ExitCode: 1}).Combined()
 	assert.Assert(t, strings.Contains(output, "vulnerability found"))
+	// Check the Call To Action is prompted as the user isn't logged to Snyk
+	assert.Assert(t, strings.Contains(output, callToAction))
 
 	// Check that token file has been created
 	buf, err := ioutil.ReadFile(filepath.Join(configDir, "scan", "scan-id.json"))
@@ -154,6 +158,8 @@ func TestScanWithSnyk(t *testing.T) {
 			cmd.Command = dockerCli.Command("scan", testCase.image)
 			output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{ExitCode: testCase.exitCode}).Combined()
 			assert.Assert(t, strings.Contains(output, testCase.contains))
+			// Users logged with Snyk shouldn't see the call to action message
+			assert.Assert(t, !strings.Contains(output, callToAction))
 		})
 	}
 }

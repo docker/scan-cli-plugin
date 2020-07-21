@@ -36,16 +36,24 @@ import (
 )
 
 type snykProvider struct {
-	path    string
-	flags   []string
-	auth    types.AuthConfig
-	context context.Context
+	path         string
+	flags        []string
+	auth         types.AuthConfig
+	context      context.Context
+	callToAction string
 }
+
+const (
+	callToAction = `To get more local scans, sign in with a Snyk account or to automate your scans sign up for scanning at Docker Hub.
+Please follow this link https://dockr.ly/3ePqVcp to sign up.
+`
+)
 
 // NewSnykProvider returns a Snyk implementation of scan provider
 func NewSnykProvider(ops ...SnykProviderOps) (Provider, error) {
 	provider := snykProvider{
-		flags: []string{"test", "--docker"},
+		flags:        []string{"test", "--docker"},
+		callToAction: callToAction,
 	}
 	for _, op := range ops {
 		if err := op(&provider); err != nil {
@@ -89,6 +97,7 @@ func WithAuthConfig(authResolver func(*registry.IndexInfo) types.AuthConfig) Sny
 func WithJSON() SnykProviderOps {
 	return func(provider *snykProvider) error {
 		provider.flags = append(provider.flags, "--json")
+		provider.callToAction = ""
 		return nil
 	}
 }
@@ -138,13 +147,20 @@ func (s *snykProvider) Scan(image string) error {
 		if err != nil {
 			return fmt.Errorf("failed to get DockerScanID: %s", err)
 		}
+	} else {
+		// Snyk users shouldn't see the call to action
+		s.callToAction = ""
 	}
 
 	cmd := exec.CommandContext(s.context, s.path, append(s.flags, image)...)
 	cmd.Env = append(os.Environ(), fmt.Sprintf("SNYK_DOCKER_TOKEN=%s", token))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	return checkCommandErr(cmd.Run())
+	if err := checkCommandErr(cmd.Run()); err != nil {
+		return err
+	}
+	fmt.Printf("%s", s.callToAction)
+	return nil
 }
 
 func (s *snykProvider) getToken() (string, error) {
