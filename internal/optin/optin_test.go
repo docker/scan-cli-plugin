@@ -1,4 +1,5 @@
 // +build !windows
+
 /*
    Copyright 2020 Docker Inc.
 
@@ -41,7 +42,7 @@ func TestAskForConsent(t *testing.T) {
 	donec := make(chan struct{})
 	go func() {
 		defer close(donec)
-		_, err := console.Expect(expect.WithTimeout(10*time.Millisecond),
+		_, err := console.Expect(expect.WithTimeout(100*time.Millisecond),
 			expect.String("Docker Scan relies upon access to Snyk a third party provider, do you consent to proceed using Snyk?"))
 		assert.NilError(t, err)
 		_, err = console.SendLine("y")
