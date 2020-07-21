@@ -27,7 +27,7 @@ import (
 	"github.com/Netflix/go-expect"
 	"github.com/hinshun/vt10x"
 	"github.com/stretchr/testify/require"
-	"gotest.tools/assert"
+	"gotest.tools/v3/assert"
 )
 
 // TODO: this test is skipped (not built) on windows platform, as github.com/Netflix/go-expect
