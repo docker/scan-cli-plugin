@@ -60,6 +60,18 @@ please login to Docker Hub using the Docker Login command`,
 	})
 }
 
+func TestScanFromScratchFailsWithCleanMessage(t *testing.T) {
+	cmd, _, cleanup := dockerCli.createTestCmd()
+	defer cleanup()
+
+	cmd.Command = dockerCli.Command("scan", "example:image")
+	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
+		ExitCode: 1,
+		Err: `You need to be logged in to Docker Hub to use scan feature.
+please login to Docker Hub using the Docker Login command`,
+	})
+}
+
 func TestScanFailsWithCleanMessage(t *testing.T) {
 	// create Snyk config file with empty token
 	_, cleanFunction := createSnykConfFile(t, "")
