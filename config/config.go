@@ -63,5 +63,5 @@ func SaveConfigFile(conf Config) error {
 	}
 
 	path := filepath.Join(cliConfig.Dir(), "scan", "config.json")
-	return errors.Wrap(ioutil.WriteFile(path, out, os.FileMode(644)), "failed to write docker scan configuration file")
+	return errors.Wrap(ioutil.WriteFile(path, out, os.FileMode(0644)), "failed to write docker scan configuration file")
 }
