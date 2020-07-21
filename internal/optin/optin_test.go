@@ -1,3 +1,5 @@
+// +build !windows
+
 /*
    Copyright 2020 Docker Inc.
 
@@ -28,6 +30,9 @@ import (
 	"gotest.tools/assert"
 )
 
+// TODO: this test is skipped (not built) on windows platform, as github.com/Netflix/go-expect
+// relies on github.com/creack/pty which doesn't provide any windows support. We should find
+// another way to test this feature on all platforms.
 func TestAskForConsent(t *testing.T) {
 	buf := new(bytes.Buffer)
 	console, _, err := vt10x.NewVT10XConsole(expect.WithStdout(buf))
@@ -37,7 +42,7 @@ func TestAskForConsent(t *testing.T) {
 	donec := make(chan struct{})
 	go func() {
 		defer close(donec)
-		_, err := console.Expect(expect.WithTimeout(10*time.Millisecond),
+		_, err := console.Expect(expect.WithTimeout(100*time.Millisecond),
 			expect.String("Docker Scan relies upon access to Snyk a third party provider, do you consent to proceed using Snyk?"))
 		assert.NilError(t, err)
 		_, err = console.SendLine("y")
