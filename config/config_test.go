@@ -51,9 +51,13 @@ func TestSaveConfigFile(t *testing.T) {
 
 	defer env.Patch(t, "DOCKER_CONFIG", configDir)
 
-	config := Config{
+	expected := Config{
 		Path:  configDir,
 		Optin: false,
 	}
-	assert.NilError(t, SaveConfigFile(config))
+	assert.NilError(t, SaveConfigFile(expected))
+
+	result, err := ReadConfigFile()
+	assert.NilError(t, err)
+	assert.Equal(t, result, expected)
 }
