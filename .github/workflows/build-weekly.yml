@@ -56,7 +56,7 @@ jobs:
       - name: ON FAILURE - Slack notification
         if: ${{ failure() }}
         run: |
-          curl -X POST -H 'Content-type: application/json' --data '{"text":"@here :no_entry_sign: docker scan cli plugin Weekly Build FAILED on ${{ matrix.os}}"}' ${{ secrets.SLACK_WEBHOOK }}
+          curl -X POST -H 'Content-type: application/json' --data '{"text":"@here :no_entry_sign: <${{ env.GITHUB_WORKFLOW_URL }}|docker scan cli plugin Weekly Build FAILED> on ${{ matrix.os}}"}' ${{ secrets.SLACK_WEBHOOK }}
       - name: ON CANCELLED - Slack notification
         if: ${{ cancelled() }}
         run: |
