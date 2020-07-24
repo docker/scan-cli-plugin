@@ -71,11 +71,18 @@ test-unit: test-unit-build ## Run unit tests
 lint: ## Run the go linter
 	@docker build . --target lint
 
-.PHONY: validate
-validate: ## Validate files license header
+.PHONY: validate-headers
+validate-headers: ## Validate files license header
 	docker run --rm -v $(CURDIR):/work -w /work \
 	 golang:${GO_VERSION} \
 	 bash -c 'go get -u github.com/kunalkushwaha/ltag && ./scripts/validate/fileheader'
+
+.PHONY: validate-go-mod
+validate-go-mod: ## Validate go.mod and go.sum are up-to-date
+	@docker build . --target check-go-mod
+
+.PHONY: validate
+validate: validate-headers validate-go-mod ## Validate sources
 
 .PHONY: help
 help: ## Show help
