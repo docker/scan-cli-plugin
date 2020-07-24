@@ -49,6 +49,12 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     make -f builder.Makefile lint
 
 ####
+# CHECK GO MOD
+####
+FROM builder AS check-go-mod
+RUN scripts/validate/check-go-mod
+
+####
 # BUILD
 ####
 FROM builder AS build
