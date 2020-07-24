@@ -66,6 +66,8 @@ type options struct {
 	excludeBase    bool
 	jsonFormat     bool
 	showVersion    bool
+	forceOptIn     bool
+	forceOptOut    bool
 }
 
 func newScanCmd(ctx context.Context, dockerCli command.Cli) *cobra.Command {
@@ -91,28 +93,16 @@ func newScanCmd(ctx context.Context, dockerCli command.Cli) *cobra.Command {
 	cmd.Flags().StringVarP(&flags.dockerFilePath, "file", "f", "", "Provide the Dockerfile for better scan results")
 	cmd.Flags().BoolVar(&flags.jsonFormat, "json", false, "Display results with JSON format")
 	cmd.Flags().BoolVar(&flags.showVersion, "version", false, "Display version of scan plugin")
+	cmd.Flags().BoolVar(&flags.forceOptIn, "enable", false, "Accept user consent")
+	cmd.Flags().BoolVar(&flags.forceOptOut, "disable", false, "Refuse user consent")
 
 	return cmd
 }
 
 func configureProvider(ctx context.Context, dockerCli command.Streams, flags options, options ...provider.SnykProviderOps) (provider.Provider, error) {
-	conf, err := config.ReadConfigFile()
+	conf, err := checkConsent(flags, dockerCli)
 	if err != nil {
 		return nil, err
-	}
-
-	if !conf.Optin {
-		answer, err := optin.AskForConsent(optin.TerminalStdio(dockerCli.In(), dockerCli.Out(), dockerCli.Err()))
-		if err != nil {
-			return nil, err
-		}
-		conf.Optin = answer
-		if err := config.SaveConfigFile(conf); err != nil {
-			return nil, err
-		}
-		if !answer {
-			os.Exit(0)
-		}
 	}
 
 	opts := []provider.SnykProviderOps{
@@ -135,6 +125,38 @@ func configureProvider(ctx context.Context, dockerCli command.Streams, flags opt
 		opts = append(opts, provider.WithDependencyTree())
 	}
 	return provider.NewSnykProvider(opts...)
+}
+
+func checkConsent(flags options, dockerCli command.Streams) (config.Config, error) {
+	conf, err := config.ReadConfigFile()
+	if err != nil {
+		return config.Config{}, err
+	}
+
+	if !conf.Optin || flags.forceOptIn || flags.forceOptOut {
+		switch {
+		case !flags.forceOptOut && !flags.forceOptIn:
+			answer, err := optin.AskForConsent(optin.TerminalStdio(dockerCli.In(), dockerCli.Out(), dockerCli.Err()))
+			if err != nil {
+				return config.Config{}, err
+			}
+			conf.Optin = answer
+		case flags.forceOptOut && flags.forceOptIn:
+			return config.Config{}, fmt.Errorf("enable and disable flags are mutualy exlusive")
+		case flags.forceOptIn:
+			conf.Optin = true
+		case flags.forceOptOut:
+			conf.Optin = false
+		}
+
+		if err := config.SaveConfigFile(conf); err != nil {
+			return config.Config{}, err
+		}
+		if !conf.Optin {
+			os.Exit(0)
+		}
+	}
+	return conf, nil
 }
 
 func runVersion(ctx context.Context, dockerCli command.Streams, flags options) error {

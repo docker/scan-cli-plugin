@@ -43,7 +43,7 @@ func TestSnykAuthentication(t *testing.T) {
 	token := os.Getenv("E2E_TEST_AUTH_TOKEN")
 	assert.Assert(t, token != "", "E2E_TEST_AUTH_TOKEN needs to be filled")
 
-	cmd.Command = dockerCli.Command("scan", "--auth", token)
+	cmd.Command = dockerCli.Command("scan", "--enable", "--auth", token)
 	icmd.RunCmd(cmd).Assert(t, icmd.Success)
 
 	// snyk config file should be updated
@@ -59,7 +59,7 @@ func TestAuthenticationFlagFailsWithImage(t *testing.T) {
 	token := os.Getenv("E2E_TEST_AUTH_TOKEN")
 	assert.Assert(t, token != "", "E2E_TEST_AUTH_TOKEN needs to be filled")
 
-	cmd.Command = dockerCli.Command("scan", "--auth", token, "example:image")
+	cmd.Command = dockerCli.Command("scan", "--enable", "--auth", token, "example:image")
 	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
 		ExitCode: 1,
 		Err:      "--auth flag expects maximum one argument",
@@ -70,7 +70,7 @@ func TestAuthenticationChecksToken(t *testing.T) {
 	cmd, _, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
 
-	cmd.Command = dockerCli.Command("scan", "--auth", "invalid-token")
+	cmd.Command = dockerCli.Command("scan", "--enable", "--auth", "invalid-token")
 	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
 		ExitCode: 1,
 		Err:      `invalid authentication token "invalid-token"`,
