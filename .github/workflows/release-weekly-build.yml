@@ -1,8 +1,11 @@
-name: Weekly Build
+name: Release and Weekly Build
 on:
   schedule:
     - cron: "0 0 * * SUN"
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release Tag'
 
 jobs:
   build:
@@ -49,6 +52,14 @@ jobs:
           E2E_HUB_USERNAME: ${{ secrets.E2E_HUB_USERNAME }}
           E2E_HUB_TOKEN_TOKEN: ${{ secrets.E2E_HUB_TOKEN_TOKEN }}
         run: make -f builder.Makefile build test-unit e2e
+
+      - name: Upload binary artifact
+        if: ${{ github.event.inputs.tag != '' }} # don't push artifacts if no tag is specified
+        uses: actions/upload-artifact@v2
+        with:
+          name: docker-scan-${{ matrix.os}}
+          path: dist/*
+
       - name: ON SUCCESS - Slack notification
         if: ${{ success() }}
         run: |
@@ -61,3 +72,29 @@ jobs:
         if: ${{ cancelled() }}
         run: |
           curl -X POST -H 'Content-type: application/json' --data '{"text":":bangbang: docker scan cli plugin Weekly Build CANCELED on ${{ matrix.os}}"}' ${{ secrets.SLACK_WEBHOOK }}
+
+  release:
+    runs-on: ubuntu-latest
+    needs: build
+    if: ${{ github.event.inputs.tag != '' }} # don't release if no tag is specified
+    env:
+      E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
+    steps:
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v2
+        with:
+          path: dist
+
+      - name: Ship it
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/*"
+          prerelease: true
+          draft: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: ${{ github.event.inputs.tag }}
+      - name: ON SUCCESS - Slack notification
+        if: ${{ success() }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' --data '{"text":":heavy_check_mark: docker scan cli plugin has been released ${{ github.event.inputs.tag }}"}' ${{ secrets.SLACK_WEBHOOK }}
