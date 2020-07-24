@@ -25,7 +25,6 @@ import (
 	"testing"
 
 	dockerConfigFile "github.com/docker/cli/cli/config/configfile"
-	"github.com/docker/scan-cli-plugin/config"
 	"gotest.tools/v3/icmd"
 )
 
@@ -48,20 +47,6 @@ func (d dockerCliCommand) createTestCmd() (icmd.Cmd, string, func()) {
 	}
 	sourceDir := os.Getenv("SNYK_DESKTOP_PATH")
 	copyBinary("snyk", sourceDir, filepath.Join(configDir, "scan"))
-
-	pluginFilePath := filepath.Join(configDir, "scan", "config.json")
-	pluginConfig := config.Config{
-		Optin: true,
-	}
-	pluginConfigFile, err := os.Create(pluginFilePath)
-	if err != nil {
-		panic(err)
-	}
-	defer pluginConfigFile.Close() //nolint:errcheck
-	err = json.NewEncoder(pluginConfigFile).Encode(pluginConfig)
-	if err != nil {
-		panic(err)
-	}
 
 	configFilePath := filepath.Join(configDir, "config.json")
 	dockerConfig := dockerConfigFile.ConfigFile{

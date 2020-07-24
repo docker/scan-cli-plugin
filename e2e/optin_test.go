@@ -78,3 +78,22 @@ func TestFirstScanOptinMessage(t *testing.T) {
 	assert.NilError(t, json.Unmarshal(data, &conf))
 	assert.Equal(t, conf.Optin, true)
 }
+
+func TestRefuseOptinWithDisableFlag(t *testing.T) {
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
+	defer cleanup()
+
+	// docker scan --version should exit immediately
+	cmd.Command = dockerCli.Command("scan", "--disable", "--version")
+	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
+		ExitCode: 0,
+		Out:      "",
+	})
+
+	// check the consent has been stored in config file
+	data, err := ioutil.ReadFile(filepath.Join(configDir, "scan", "config.json"))
+	assert.NilError(t, err)
+	var conf config.Config
+	assert.NilError(t, json.Unmarshal(data, &conf))
+	assert.Equal(t, conf.Optin, false)
+}

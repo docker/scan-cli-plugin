@@ -7,6 +7,8 @@ Options:
       --auth              Authenticate to the scan provider using an
                           optional token, or web base token if empty
       --dependency-tree   Show dependency tree before scan results
+      --disable           Refuse user consent
+      --enable            Accept user consent
       --exclude-base      Exclude base image from vulnerabiliy scanning
                           (needs to provide a Dockerfile using --file)
   -f, --file string       Provide the Dockerfile for better scan results
