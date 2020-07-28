@@ -4,6 +4,10 @@ on:
     - cron: "0 0 * * SUN"
   workflow_dispatch:
     inputs:
+      branch:
+        description: 'Branch'
+        required: true
+        default: 'main'
       tag:
         description: 'Release Tag'
 
@@ -33,6 +37,8 @@ jobs:
 
       - name: Checkout code into the Go module directory
         uses: actions/checkout@v2
+        with:
+          ${{ github.event.inputs.branch }}
 
       - name: Golang cache
         uses: actions/cache@v1
