@@ -58,7 +58,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: docker-scan-${{ matrix.os}}
-          path: dist/*
+          path: ./bin/
 
       - name: ON SUCCESS - Slack notification
         if: ${{ success() }}
