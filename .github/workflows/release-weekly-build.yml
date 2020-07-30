@@ -22,6 +22,7 @@ jobs:
         shell: bash
     env:
       GO111MODULE: "on"
+      GITHUB_WORKFLOW_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
 
     steps:
       - name: Install Docker CLI
@@ -69,15 +70,15 @@ jobs:
       - name: ON SUCCESS - Slack notification
         if: ${{ success() }}
         run: |
-          curl -X POST -H 'Content-type: application/json' --data '{"text":":heavy_check_mark: docker scan cli plugin Weekly Build SUCCESS on ${{ matrix.os}}"}' ${{ secrets.SLACK_WEBHOOK }}
+          curl -X POST -H 'Content-type: application/json' --data '{"text":":heavy_check_mark: <${{ env.GITHUB_WORKFLOW_URL }}|docker scan cli plugin Weekly Build SUCCESS> on ${{ matrix.os}}"}' ${{ secrets.SLACK_WEBHOOK }}
       - name: ON FAILURE - Slack notification
         if: ${{ failure() }}
         run: |
-          curl -X POST -H 'Content-type: application/json' --data '{"text":"@here :no_entry_sign: <${{ env.GITHUB_WORKFLOW_URL }}|docker scan cli plugin Weekly Build FAILED> on ${{ matrix.os}}"}' ${{ secrets.SLACK_WEBHOOK }}
+          curl -X POST -H 'Content-type: application/json' --data '{"text":":no_entry_sign: <${{ env.GITHUB_WORKFLOW_URL }}|docker scan cli plugin Weekly Build FAILED> on ${{ matrix.os}}"}' ${{ secrets.SLACK_WEBHOOK }}
       - name: ON CANCELLED - Slack notification
         if: ${{ cancelled() }}
         run: |
-          curl -X POST -H 'Content-type: application/json' --data '{"text":":bangbang: docker scan cli plugin Weekly Build CANCELED on ${{ matrix.os}}"}' ${{ secrets.SLACK_WEBHOOK }}
+          curl -X POST -H 'Content-type: application/json' --data '{"text":":bangbang: <${{ env.GITHUB_WORKFLOW_URL }}|docker scan cli plugin Weekly Build CANCELED> on ${{ matrix.os}}"}' ${{ secrets.SLACK_WEBHOOK }}
 
   release:
     runs-on: ubuntu-latest
@@ -85,6 +86,7 @@ jobs:
     if: ${{ github.event.inputs.tag != '' }} # don't release if no tag is specified
     env:
       E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
+      GITHUB_WORKFLOW_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
     steps:
 
       - name: Download artifacts
@@ -103,4 +105,4 @@ jobs:
       - name: ON SUCCESS - Slack notification
         if: ${{ success() }}
         run: |
-          curl -X POST -H 'Content-type: application/json' --data '{"text":":heavy_check_mark: docker scan cli plugin has been released ${{ github.event.inputs.tag }}"}' ${{ secrets.SLACK_WEBHOOK }}
+          curl -X POST -H 'Content-type: application/json' --data '{"text":":heavy_check_mark: <${{ env.GITHUB_WORKFLOW_URL }}|docker scan cli plugin has been released> ${{ github.event.inputs.tag }}"}' ${{ secrets.SLACK_WEBHOOK }}
