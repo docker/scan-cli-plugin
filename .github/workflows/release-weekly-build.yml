@@ -95,7 +95,7 @@ jobs:
       - name: Ship it
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "dist/*"
+          artifacts: "dist/*/docker-scan-*"
           prerelease: true
           draft: true
           token: ${{ secrets.GITHUB_TOKEN }}
