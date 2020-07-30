@@ -69,7 +69,8 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 # SCAN
 ####
 FROM scratch AS scan
-COPY --from=build /go/src/github.com/docker/scan-cli-plugin/bin/docker-scan /docker-scan
+ARG TARGETOS
+COPY --from=build /go/src/github.com/docker/scan-cli-plugin/bin/docker-scan_${TARGETOS} /docker-scan_${TARGETOS}
 
 ####
 # CROSS_BUILD
@@ -126,6 +127,8 @@ RUN make -f builder.Makefile download
 # E2E
 ####
 FROM builder AS e2e
+ARG TARGETOS
+ARG TARGETARCH
 ARG SNYK_DESKTOP_VERSION=1.332.0
 ENV SNYK_DESKTOP_VERSION=${SNYK_DESKTOP_VERSION}
 ARG SNYK_USER_VERSION=1.334.0
@@ -142,6 +145,6 @@ COPY --from=download /go/bin/gotestsum /usr/local/bin/gotestsum
 # install docker CLI
 COPY --from=cli /usr/local/bin/docker /usr/local/bin/docker
 # install docker-scan plugin
-COPY --from=cross-build /go/src/github.com/docker/scan-cli-plugin/dist/docker-scan_linux_amd64 ./bin/docker-scan
-RUN chmod +x ./bin/docker-scan
+COPY --from=cross-build /go/src/github.com/docker/scan-cli-plugin/dist/docker-scan_${TARGETOS}_${TARGETARCH} ./bin/docker-scan_${TARGETOS}_${TARGETARCH}
+RUN chmod +x ./bin/docker-scan_${TARGETOS}_${TARGETARCH}
 CMD ["make", "-f", "builder.Makefile", "e2e"]
