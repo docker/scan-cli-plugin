@@ -58,7 +58,7 @@ jobs:
           E2E_HUB_URL: ${{ secrets.E2E_HUB_URL }}
           E2E_HUB_USERNAME: ${{ secrets.E2E_HUB_USERNAME }}
           E2E_HUB_TOKEN_TOKEN: ${{ secrets.E2E_HUB_TOKEN_TOKEN }}
-        run: make -f builder.Makefile build test-unit e2e
+        run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile build test-unit e2e
 
       - name: Upload binary artifact
         if: ${{ github.event.inputs.tag != '' }} # don't push artifacts if no tag is specified
