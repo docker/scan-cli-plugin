@@ -18,11 +18,13 @@ LDFLAGS := "-s -w \
   -X $(PKG_NAME)/internal.GitCommit=$(COMMIT) \
   -X $(PKG_NAME)/internal.Version=$(TAG_NAME)"
 GO_BUILD = $(STATIC_FLAGS) go build -trimpath -ldflags=$(LDFLAGS)
-BINARY:=docker-scan
+BINARY=docker-scan
+PLATFORM_BINARY:=$(BINARY)_$(GOOS)_amd64
 SNYK_DOWNLOAD_NAME:=snyk-linux
 SNYK_BINARY:=snyk
 PWD:=$(shell pwd)
 ifeq ($(GOOS),windows)
+	PLATFORM_BINARY=docker-scan_$(GOOS)_amd64.exe
 	BINARY=docker-scan.exe
 	SNYK_DOWNLOAD_NAME:=snyk-win.exe
 	SNYK_BINARY=snyk.exe
@@ -50,7 +52,7 @@ lint:
 e2e:
 	mkdir -p docker-config/scan
 	mkdir -p docker-config/cli-plugins
-	cp ./bin/${BINARY} docker-config/cli-plugins/${BINARY}
+	cp ./bin/${PLATFORM_BINARY} docker-config/cli-plugins/${BINARY}
 	$(VARS) gotestsum ./e2e $(RUN_TEST) -- -ldflags=$(LDFLAGS)
 
 .PHONY: test-unit
@@ -65,7 +67,7 @@ cross:
 .PHONY: build
 build:
 	mkdir -p bin
-	$(GO_BUILD) -o bin/$(BINARY) ./cmd/docker-scan
+	$(GO_BUILD) -o bin/$(PLATFORM_BINARY) ./cmd/docker-scan
 
 # For multi-platform (windows,macos,linux) github actions
 .PHONY: download

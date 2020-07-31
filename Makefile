@@ -82,7 +82,7 @@ validate-go-mod: ## Validate go.mod and go.sum are up-to-date
 	@docker build . --target check-go-mod
 
 .PHONY: validate
-validate: validate-headers validate-go-mod ## Validate sources
+validate: validate-go-mod validate-headers ## Validate sources
 
 .PHONY: help
 help: ## Show help
