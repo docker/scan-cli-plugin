@@ -84,7 +84,7 @@ func TestRefuseOptinWithDisableFlag(t *testing.T) {
 	defer cleanup()
 
 	// docker scan --version should exit immediately
-	cmd.Command = dockerCli.Command("scan", "--disable", "--version")
+	cmd.Command = dockerCli.Command("scan", "--reject-license", "--version")
 	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
 		ExitCode: 0,
 		Out:      "",

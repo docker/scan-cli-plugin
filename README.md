@@ -250,14 +250,14 @@ Usage:	docker scan [OPTIONS] IMAGE
 A tool to scan your docker image
 
 Options:
+      --accept-license    Accept to using a third party scanning provider
       --auth              Authenticate to the scan provider using an optional token, or web base token if empty
-      --dependency-tree   Show dependency tree before scan results
-      --disable           Refuse user consent
-      --enable            Accept user consent
-      --exclude-base      Exclude base image from vulnerabiliy scanning (needs to provide a Dockerfile using --file)
-  -f, --file string       Provide the Dockerfile for better scan results
-      --json              Display results with JSON format
-      --version           Display version of scan plugin
+      --dependency-tree   Show dependency tree with scan results
+      --exclude-base      Exclude base image from vulnerability scanning (requires --file)
+  -f, --file string       Dockerfile associated with image
+      --json              Output results in JSON format
+      --reject-license    Reject to using a third party scanning provider
+      --version           Display version of the scan plugin
 ```
 
 If you get the following error message, you're not using the latest version of Docker Desktop
