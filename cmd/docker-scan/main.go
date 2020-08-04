@@ -93,8 +93,8 @@ func newScanCmd(ctx context.Context, dockerCli command.Cli) *cobra.Command {
 	cmd.Flags().StringVarP(&flags.dockerFilePath, "file", "f", "", "Provide the Dockerfile for better scan results")
 	cmd.Flags().BoolVar(&flags.jsonFormat, "json", false, "Display results with JSON format")
 	cmd.Flags().BoolVar(&flags.showVersion, "version", false, "Display version of scan plugin")
-	cmd.Flags().BoolVar(&flags.forceOptIn, "enable", false, "Accept user consent")
-	cmd.Flags().BoolVar(&flags.forceOptOut, "disable", false, "Refuse user consent")
+	cmd.Flags().BoolVar(&flags.forceOptIn, "accept-license", false, "Accept to using a third party scanning provider")
+	cmd.Flags().BoolVar(&flags.forceOptOut, "reject-license", false, "Reject to using a third party scanning provider")
 
 	return cmd
 }

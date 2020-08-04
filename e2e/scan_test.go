@@ -52,7 +52,7 @@ func TestScanFailsNoAuthentication(t *testing.T) {
 	// write dockerCli config with authentication to a registry which isn't Hub
 	patchConfig(t, configDir, "com.example.registry", "invalid-user", "invalid-password")
 
-	cmd.Command = dockerCli.Command("scan", "--enable", "example:image")
+	cmd.Command = dockerCli.Command("scan", "--accept-license", "example:image")
 	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
 		ExitCode: 1,
 		Err: `You need to be logged in to Docker Hub to use scan feature.
@@ -68,7 +68,7 @@ func TestScanFailsWithCleanMessage(t *testing.T) {
 	cmd, _, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
 
-	cmd.Command = dockerCli.Command("scan", "--enable", "example:image")
+	cmd.Command = dockerCli.Command("scan", "--accept-license", "example:image")
 	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
 		ExitCode: 1,
 		Err: `You need to be logged in to Docker Hub to use scan feature.
@@ -91,7 +91,7 @@ func TestScanSucceedWithDockerHub(t *testing.T) {
 	assert.Assert(t, strings.Contains(output, "vulnerability found"))
 
 	// Check that token file has been created
-	buf, err := ioutil.ReadFile(filepath.Join(configDir, "scan", "--enable", "scan-id.json"))
+	buf, err := ioutil.ReadFile(filepath.Join(configDir, "scan", "--accept-license", "scan-id.json"))
 	assert.NilError(t, err)
 	var scanID struct {
 		Identifier string `json:"id"`
@@ -179,7 +179,7 @@ func TestScanJsonOutput(t *testing.T) {
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			cmd.Command = dockerCli.Command("scan", "--enable", "--json", testCase.image)
+			cmd.Command = dockerCli.Command("scan", "--accept-license", "--json", testCase.image)
 			output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{ExitCode: testCase.exitCode}).Combined()
 			var jsonOutput JSONOutput
 			assert.NilError(t, json.Unmarshal([]byte(output), &jsonOutput))
@@ -204,7 +204,7 @@ func TestScanWithFileAndExcludeBaseImageVulns(t *testing.T) {
 
 	createScanConfigFile(t, configDir)
 
-	cmd.Command = dockerCli.Command("scan", "--enable", "--file", "./testdata/Dockerfile", "--exclude-base", ImageBaseImageVulnerabilities)
+	cmd.Command = dockerCli.Command("scan", "--accept-license", "--file", "./testdata/Dockerfile", "--exclude-base", ImageBaseImageVulnerabilities)
 	output := icmd.RunCmd(cmd).Assert(t, icmd.Success).Combined()
 	assert.Assert(t, strings.Contains(output, "found 0 issues."))
 }
@@ -221,7 +221,7 @@ func TestScanWithExcludeBaseImageVulns(t *testing.T) {
 
 	createScanConfigFile(t, configDir)
 
-	cmd.Command = dockerCli.Command("scan", "--enable", "--exclude-base", ImageBaseImageVulnerabilities)
+	cmd.Command = dockerCli.Command("scan", "--accept-license", "--exclude-base", ImageBaseImageVulnerabilities)
 	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
 		ExitCode: 1,
 		Err:      "--file flag is mandatory to use --exclude-base flag"})
@@ -239,7 +239,7 @@ func TestScanWithDependencies(t *testing.T) {
 
 	createScanConfigFile(t, configDir)
 
-	cmd.Command = dockerCli.Command("scan", "--enable", "--dependency-tree", ImageWithVulnerabilities)
+	cmd.Command = dockerCli.Command("scan", "--accept-license", "--dependency-tree", ImageWithVulnerabilities)
 	output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{ExitCode: 1}).Combined()
 	assert.Assert(t, strings.Contains(output, "docker-image|alpine @ 3.10.0")) // beginning of the dependency tree
 	assert.Assert(t, strings.Contains(output, "vulnerability found"))
