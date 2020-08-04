@@ -89,7 +89,7 @@ func newScanCmd(ctx context.Context, dockerCli command.Cli) *cobra.Command {
 	}
 	cmd.Flags().BoolVar(&flags.authenticate, "auth", false, "Authenticate to the scan provider using an optional token, or web base token if empty")
 	cmd.Flags().BoolVar(&flags.dependencyTree, "dependency-tree", false, "Show dependency tree before scan results")
-	cmd.Flags().BoolVar(&flags.excludeBase, "exclude-base", false, "Exclude base image from vulnerabiliy scanning (needs to provide a Dockerfile using --file)")
+	cmd.Flags().BoolVar(&flags.excludeBase, "exclude-base", false, "Exclude base image from vulnerability scanning (needs to provide a Dockerfile using --file)")
 	cmd.Flags().StringVarP(&flags.dockerFilePath, "file", "f", "", "Provide the Dockerfile for better scan results")
 	cmd.Flags().BoolVar(&flags.jsonFormat, "json", false, "Display results with JSON format")
 	cmd.Flags().BoolVar(&flags.showVersion, "version", false, "Display version of scan plugin")

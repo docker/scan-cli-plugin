@@ -254,7 +254,7 @@ Options:
       --dependency-tree   Show dependency tree before scan results
       --disable           Refuse user consent
       --enable            Accept user consent
-      --exclude-base      Exclude base image from vulnerabiliy scanning (needs to provide a Dockerfile using --file)
+      --exclude-base      Exclude base image from vulnerability scanning (needs to provide a Dockerfile using --file)
   -f, --file string       Provide the Dockerfile for better scan results
       --json              Display results with JSON format
       --version           Display version of scan plugin
