@@ -47,7 +47,8 @@ cross: ## Cross compile docker-scan binaries in a container
 
 .PHONY: install
 install: build ## Install docker-scan to your local cli-plugins directory
-	cp bin/docker-scan ~/.docker/cli-plugins
+	mkdir -p $(HOME)/.docker/cli-plugins
+	cp bin/$(PLATFORM_BINARY) $(HOME)/.docker/cli-plugins/$(BINARY)
 
 .PHONY: test ## Run unit tests then end-to-end tests
 test: test-unit e2e
