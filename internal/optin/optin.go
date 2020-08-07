@@ -28,7 +28,7 @@ import (
 func AskForConsent(stdio terminal.Stdio) (bool, error) {
 	answer := false
 	prompt := &survey.Confirm{
-		Message: "Docker Scan relies upon access to Snyk a third party provider, do you consent to proceed using Snyk?",
+		Message: "Docker Scan relies upon access to Snyk, a third party provider, do you consent to proceed using Snyk?",
 	}
 	if err := survey.AskOne(prompt, &answer, survey.WithStdio(stdio.In, stdio.Out, stdio.Err)); err != nil {
 		return false, fmt.Errorf("failed to ask user consent: %s", err)
