@@ -10,22 +10,17 @@ ifeq ($(TAG_NAME),)
   TAG_NAME := $(shell git describe --always --dirty --abbrev=10 2> $(NULL))
 endif
 
-GOOS ?= $(shell go env GOOS)
-
 PKG_NAME=github.com/docker/scan-cli-plugin
 STATIC_FLAGS= CGO_ENABLED=0
 LDFLAGS := "-s -w \
   -X $(PKG_NAME)/internal.GitCommit=$(COMMIT) \
   -X $(PKG_NAME)/internal.Version=$(TAG_NAME)"
 GO_BUILD = $(STATIC_FLAGS) go build -trimpath -ldflags=$(LDFLAGS)
-BINARY=docker-scan
-PLATFORM_BINARY:=$(BINARY)_$(GOOS)_amd64
+
 SNYK_DOWNLOAD_NAME:=snyk-linux
 SNYK_BINARY:=snyk
 PWD:=$(shell pwd)
 ifeq ($(GOOS),windows)
-	PLATFORM_BINARY=docker-scan_$(GOOS)_amd64.exe
-	BINARY=docker-scan.exe
 	SNYK_DOWNLOAD_NAME:=snyk-win.exe
 	SNYK_BINARY=snyk.exe
 	PWD=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))

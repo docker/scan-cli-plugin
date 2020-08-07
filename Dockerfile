@@ -69,8 +69,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
 # SCAN
 ####
 FROM scratch AS scan
-ARG TARGETOS
-COPY --from=build /go/src/github.com/docker/scan-cli-plugin/bin/docker-scan_${TARGETOS} /docker-scan_${TARGETOS}
+COPY --from=build /go/src/github.com/docker/scan-cli-plugin/bin/docker-scan_* /
 
 ####
 # CROSS_BUILD
