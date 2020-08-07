@@ -1,5 +1,3 @@
-// +build !windows
-
 /*
    Copyright 2020 Docker Inc.
 
@@ -20,45 +18,62 @@ package optin
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
-	"time"
 
-	"github.com/AlecAivazis/survey/v2/terminal"
-	"github.com/Netflix/go-expect"
-	"github.com/hinshun/vt10x"
-	"github.com/stretchr/testify/require"
 	"gotest.tools/v3/assert"
 )
 
-// TODO: this test is skipped (not built) on windows platform, as github.com/Netflix/go-expect
-// relies on github.com/creack/pty which doesn't provide any windows support. We should find
-// another way to test this feature on all platforms.
 func TestAskForConsent(t *testing.T) {
-	buf := new(bytes.Buffer)
-	console, _, err := vt10x.NewVT10XConsole(expect.WithStdout(buf))
-	require.Nil(t, err)
-	defer console.Close() //nolint:errcheck
-
-	donec := make(chan struct{})
-	go func() {
-		defer close(donec)
-		_, err := console.Expect(expect.WithTimeout(100*time.Millisecond),
-			expect.String("Docker Scan relies upon access to Snyk, a third party provider, do you consent to proceed using Snyk?"))
-		assert.NilError(t, err)
-		_, err = console.SendLine("y")
-		assert.NilError(t, err)
-		_, err = console.ExpectEOF()
-		assert.NilError(t, err)
-	}()
-
-	answer, err := AskForConsent(terminal.Stdio{
-		In:  console.Tty(),
-		Out: console.Tty(),
-		Err: console.Tty(),
-	})
-	assert.NilError(t, err)
-	assert.Equal(t, answer, true)
-
-	assert.NilError(t, console.Tty().Close())
-	<-donec
+	testCases := []struct {
+		name    string
+		input   string
+		consent bool
+	}{
+		{
+			name:    "empty input rejects consent",
+			input:   "",
+			consent: false,
+		},
+		{
+			name:    "invalid input rejects consent",
+			input:   "invalid",
+			consent: false,
+		},
+		{
+			name:    "Upper case YES accepts consent",
+			input:   "YES",
+			consent: true,
+		},
+		{
+			name:    "Lower case yes accepts consent",
+			input:   "yes",
+			consent: true,
+		},
+		{
+			name:    "just y accepts consent",
+			input:   "y",
+			consent: true,
+		},
+		{
+			name:    "spaces are ignored",
+			input:   "   yes   ",
+			consent: true,
+		},
+		{
+			name:    "n rejects consent",
+			input:   "n",
+			consent: false,
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			stdin, stdout := bytes.NewBuffer(nil), bytes.NewBuffer(nil)
+			fmt.Fprint(stdin, testCase.input)
+			consent := AskForConsent(stdin, stdout)
+			assert.Equal(t, consent, testCase.consent)
+			assert.Equal(t, stdout.String(), `Docker Scan relies upon access to Snyk, a third party provider, do you consent to proceed using Snyk? (y/N)
+`)
+		})
+	}
 }

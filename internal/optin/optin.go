@@ -17,46 +17,24 @@
 package optin
 
 import (
+	"bufio"
 	"fmt"
 	"io"
-
-	"github.com/AlecAivazis/survey/v2"
-	"github.com/AlecAivazis/survey/v2/terminal"
+	"strings"
 )
 
 // AskForConsent prompts a consent question to inform about Snyk usage on behalf
-func AskForConsent(stdio terminal.Stdio) (bool, error) {
-	answer := false
-	prompt := &survey.Confirm{
-		Message: "Docker Scan relies upon access to Snyk, a third party provider, do you consent to proceed using Snyk?",
+func AskForConsent(stdin io.Reader, stdout io.Writer) bool {
+	fmt.Fprintln(stdout, "Docker Scan relies upon access to Snyk, a third party provider, do you consent to proceed using Snyk? (y/N)")
+	reader := bufio.NewReader(stdin)
+	input, _ := reader.ReadString('\n')
+	input = strings.ToLower(strings.TrimSpace(input))
+	switch input {
+	case "", "n", "no":
+		return false
+	case "y", "yes":
+		return true
+	default: // anything else reject the consent
+		return false
 	}
-	if err := survey.AskOne(prompt, &answer, survey.WithStdio(stdio.In, stdio.Out, stdio.Err)); err != nil {
-		return false, fmt.Errorf("failed to ask user consent: %s", err)
-	}
-	return answer, nil
-}
-
-// TerminalStdio generate a terminal.Stdio from the command input/output
-func TerminalStdio(in io.Reader, out, err io.Writer) terminal.Stdio {
-	return terminal.Stdio{
-		In:  termInput{in},
-		Out: termOutput{out},
-		Err: err,
-	}
-}
-
-type termInput struct {
-	io.Reader
-}
-
-func (termInput) Fd() uintptr {
-	return 1
-}
-
-type termOutput struct {
-	io.Writer
-}
-
-func (termOutput) Fd() uintptr {
-	return 1
 }
