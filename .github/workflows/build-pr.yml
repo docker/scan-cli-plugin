@@ -63,3 +63,9 @@ jobs:
 
       - name: End-to-end Tests
         run: make e2e
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: docker-scan
+          path: ./dist/
