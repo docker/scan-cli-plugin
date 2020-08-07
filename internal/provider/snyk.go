@@ -168,7 +168,7 @@ func (s *snykProvider) Version() (string, error) {
 	cmd.Stdout = buff
 	cmd.Stderr = buffErr
 	if err := cmd.Run(); err != nil {
-		return "", checkCommandErr(err)
+		return "", fmt.Errorf("failed to get snyk version: %s, %s", checkCommandErr(err), buffErr.String())
 	}
 	return fmt.Sprintf("Snyk (%s)", strings.TrimSpace(buff.String())), nil
 }
