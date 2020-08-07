@@ -58,7 +58,7 @@ func TestFirstScanOptinMessage(t *testing.T) {
 
 	time.Sleep(1 * time.Second)
 	_, err = console.Expect(expect.WithTimeout(1*time.Second),
-		expect.String("Docker Scan relies upon access to Snyk a third party provider, do you consent to proceed using Snyk?"))
+		expect.String("Docker Scan relies upon access to Snyk, a third party provider, do you consent to proceed using Snyk?"))
 	assert.NilError(t, err)
 	time.Sleep(1 * time.Second)
 	_, err = console.SendLine("y")

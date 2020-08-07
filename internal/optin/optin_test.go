@@ -43,7 +43,7 @@ func TestAskForConsent(t *testing.T) {
 	go func() {
 		defer close(donec)
 		_, err := console.Expect(expect.WithTimeout(100*time.Millisecond),
-			expect.String("Docker Scan relies upon access to Snyk a third party provider, do you consent to proceed using Snyk?"))
+			expect.String("Docker Scan relies upon access to Snyk, a third party provider, do you consent to proceed using Snyk?"))
 		assert.NilError(t, err)
 		_, err = console.SendLine("y")
 		assert.NilError(t, err)
