@@ -3,10 +3,8 @@ module github.com/docker/scan-cli-plugin
 go 1.14
 
 require (
-	github.com/AlecAivazis/survey/v2 v2.0.8
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/Microsoft/hcsshim v0.8.9 // indirect
-	github.com/Netflix/go-expect v0.0.0-20200312175327-da48e75238e2
 	github.com/Shopify/logrus-bugsnag v0.0.0-20171204204709-577dee27f20d // indirect
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412 // indirect
 	github.com/bitly/go-hostpool v0.1.0 // indirect
@@ -31,10 +29,8 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.4 // indirect
 	github.com/hailocab/go-hostpool v0.0.0-20160125115350-e80d13ce29ed // indirect
-	github.com/hinshun/vt10x v0.0.0-20180616224451-1954e6464174
 	github.com/jinzhu/gorm v1.9.12 // indirect
 	github.com/kardianos/osext v0.0.0-20190222173326-2bc1f35cddc0 // indirect
-	github.com/kr/pty v1.1.8 // indirect
 	github.com/lib/pq v1.5.2 // indirect
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
 	github.com/miekg/pkcs11 v1.0.3 // indirect
@@ -45,7 +41,6 @@ require (
 	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/spf13/cobra v1.0.0
-	github.com/stretchr/testify v1.4.0
 	github.com/theupdateframework/notary v0.6.1 // indirect
 	github.com/xlab/handysort v0.0.0-20150421192137-fb3537ed64a1 // indirect
 	golang.org/x/sys v0.0.0-20200523222454-059865788121 // indirect

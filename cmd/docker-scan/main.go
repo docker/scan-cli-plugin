@@ -136,11 +136,7 @@ func checkConsent(flags options, dockerCli command.Streams) (config.Config, erro
 	if !conf.Optin || flags.forceOptIn || flags.forceOptOut {
 		switch {
 		case !flags.forceOptOut && !flags.forceOptIn:
-			answer, err := optin.AskForConsent(optin.TerminalStdio(dockerCli.In(), dockerCli.Out(), dockerCli.Err()))
-			if err != nil {
-				return config.Config{}, err
-			}
-			conf.Optin = answer
+			conf.Optin = optin.AskForConsent(dockerCli.In(), dockerCli.Out())
 		case flags.forceOptOut && flags.forceOptIn:
 			return config.Config{}, fmt.Errorf("enable and disable flags are mutualy exlusive")
 		case flags.forceOptIn:
