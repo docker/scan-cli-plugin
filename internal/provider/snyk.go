@@ -123,7 +123,7 @@ func (s *snykProvider) Authenticate(token string) error {
 			return &invalidTokenError{token}
 		}
 	}
-	cmd := exec.CommandContext(s.context, s.path, "auth", token)
+	cmd := s.newCommand("auth", token)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return checkCommandErr(cmd.Run())
@@ -139,8 +139,7 @@ func (s *snykProvider) Scan(image string) error {
 			return fmt.Errorf("failed to get DockerScanID: %s", err)
 		}
 	}
-
-	cmd := exec.CommandContext(s.context, s.path, append(s.flags, image)...)
+	cmd := s.newCommand(append(s.flags, image)...)
 	cmd.Env = append(os.Environ(), fmt.Sprintf("SNYK_DOCKER_TOKEN=%s", token))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -162,7 +161,7 @@ please login to Docker Hub using the Docker Login command`)
 }
 
 func (s *snykProvider) Version() (string, error) {
-	cmd := exec.CommandContext(s.context, s.path, "--version")
+	cmd := s.newCommand("--version")
 	buff := bytes.NewBuffer(nil)
 	buffErr := bytes.NewBuffer(nil)
 	cmd.Stdout = buff
@@ -171,6 +170,12 @@ func (s *snykProvider) Version() (string, error) {
 		return "", fmt.Errorf("failed to get snyk version: %s, %s", checkCommandErr(err), buffErr.String())
 	}
 	return fmt.Sprintf("Snyk (%s)", strings.TrimSpace(buff.String())), nil
+}
+
+func (s *snykProvider) newCommand(arg ...string) *exec.Cmd {
+	cmd := exec.CommandContext(s.context, s.path, arg...)
+	cmd.Env = append(os.Environ(), "NO_UPDATE_NOTIFIER=1")
+	return cmd
 }
 
 func checkCommandErr(err error) error {
