@@ -226,17 +226,17 @@ Tested 200 dependencies for known issues, found 157 issues.
 
 If you have an existing Snyk account, you can directly use your auth token  
 ```console
-$ docker scan --auth PROVIDER_AUTH_TOKEN
+$ docker scan --login --token PROVIDER_AUTH_TOKEN
 ``` 
 
 You need to get a Snyk [API token](https://app.snyk.io/account) and then use it like this
 ```console
-$ docker scan --auth c68dc480-27bd-45ee-9f5c-XXXXXXXXXXXX
+$ docker scan --login --token c68dc480-27bd-45ee-9f5c-XXXXXXXXXXXX
 
 Your account has been authenticated. Snyk is now ready to be used. 
 ```
 
-If you use the `auth` command without any token, you will be redirected to the Snyk website to login.
+If you use the `--login` command without any token, you will be redirected to the Snyk website to login.
 
 ## Install Docker Scan
 
@@ -244,19 +244,20 @@ If you use the `auth` command without any token, you will be redirected to the S
 Docker Desktop comes with Docker scan already installed.
 Just try to use the plugin, open a terminal and write the following command:
 ```console
-docker scan
-Usage:	docker scan [OPTIONS] IMAGE
+$ docker scan
+Usage:    docker scan [OPTIONS] IMAGE
 
 A tool to scan your docker image
 
 Options:
       --accept-license    Accept to using a third party scanning provider
-      --auth              Authenticate to the scan provider using an optional token, or web base token if empty
       --dependency-tree   Show dependency tree with scan results
       --exclude-base      Exclude base image from vulnerability scanning (requires --file)
   -f, --file string       Dockerfile associated with image
       --json              Output results in JSON format
+      --login             Authenticate to the scan provider using an optional token (with --token), or web base token if empty
       --reject-license    Reject to using a third party scanning provider
+      --token string      Authentication token for login to the scan provider
       --version           Display version of the scan plugin
 ```
 

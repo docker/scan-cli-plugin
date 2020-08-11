@@ -60,7 +60,8 @@ func main() {
 }
 
 type options struct {
-	authenticate   bool
+	login          bool
+	token          string
 	dependencyTree bool
 	dockerFilePath string
 	excludeBase    bool
@@ -81,13 +82,14 @@ func newScanCmd(ctx context.Context, dockerCli command.Cli) *cobra.Command {
 			if flags.showVersion {
 				return runVersion(ctx, dockerCli, flags)
 			}
-			if flags.authenticate {
+			if flags.login {
 				return runAuthentication(ctx, dockerCli, flags, args)
 			}
 			return runScan(ctx, cmd, dockerCli, flags, args)
 		},
 	}
-	cmd.Flags().BoolVar(&flags.authenticate, "auth", false, "Authenticate to the scan provider using an optional token, or web base token if empty")
+	cmd.Flags().BoolVar(&flags.login, "login", false, "Authenticate to the scan provider using an optional token (with --token), or web base token if empty")
+	cmd.Flags().StringVar(&flags.token, "token", "", "Authentication token for login to the scan provider")
 	cmd.Flags().BoolVar(&flags.dependencyTree, "dependency-tree", false, "Show dependency tree with scan results")
 	cmd.Flags().BoolVar(&flags.excludeBase, "exclude-base", false, "Exclude base image from vulnerability scanning (requires --file)")
 	cmd.Flags().StringVarP(&flags.dockerFilePath, "file", "f", "", "Dockerfile associated with image")
@@ -170,18 +172,14 @@ func runVersion(ctx context.Context, dockerCli command.Streams, flags options) e
 }
 
 func runAuthentication(ctx context.Context, dockerCli command.Streams, flags options, args []string) error {
+	if len(args) != 0 {
+		return fmt.Errorf(`--login flag expects no argument`)
+	}
 	scanProvider, err := configureProvider(ctx, dockerCli, flags)
 	if err != nil {
 		return err
 	}
-	token := ""
-	switch {
-	case len(args) == 1:
-		token = args[0]
-	case len(args) > 1:
-		return fmt.Errorf(`--auth flag expects maximum one argument`)
-	}
-	return scanProvider.Authenticate(token)
+	return scanProvider.Authenticate(flags.token)
 }
 
 func runScan(ctx context.Context, cmd *cobra.Command, dockerCli command.Cli, flags options, args []string) error {
