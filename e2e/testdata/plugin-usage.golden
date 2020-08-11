@@ -1,18 +1,20 @@
 
 Usage:	docker scan [OPTIONS] IMAGE
 
-A tool to scan your docker image
+A tool to scan your images
 
 Options:
-      --accept-license    Accept to using a third party scanning provider
+      --accept-license    Accept using a third party scanning provider
       --dependency-tree   Show dependency tree with scan results
       --exclude-base      Exclude base image from vulnerability scanning
                           (requires --file)
-  -f, --file string       Dockerfile associated with image
+  -f, --file string       Dockerfile associated with image, provides more
+                          detailed results
       --json              Output results in JSON format
       --login             Authenticate to the scan provider using an
                           optional token (with --token), or web base
                           token if empty
-      --reject-license    Reject to using a third party scanning provider
-      --token string      Authentication token for login to the scan provider
+      --reject-license    Reject using a third party scanning provider
+      --token string      Authentication token to login to the third
+                          party scanning provider
       --version           Display version of the scan plugin
