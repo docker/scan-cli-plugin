@@ -75,7 +75,7 @@ func newScanCmd(ctx context.Context, dockerCli command.Cli) *cobra.Command {
 	var flags options
 	cmd := &cobra.Command{
 		Short:       "Docker Scan",
-		Long:        `A tool to scan your docker image`,
+		Long:        `A tool to scan your images`,
 		Use:         "scan [OPTIONS] IMAGE",
 		Annotations: map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -89,14 +89,14 @@ func newScanCmd(ctx context.Context, dockerCli command.Cli) *cobra.Command {
 		},
 	}
 	cmd.Flags().BoolVar(&flags.login, "login", false, "Authenticate to the scan provider using an optional token (with --token), or web base token if empty")
-	cmd.Flags().StringVar(&flags.token, "token", "", "Authentication token for login to the scan provider")
+	cmd.Flags().StringVar(&flags.token, "token", "", "Authentication token to login to the third party scanning provider")
 	cmd.Flags().BoolVar(&flags.dependencyTree, "dependency-tree", false, "Show dependency tree with scan results")
 	cmd.Flags().BoolVar(&flags.excludeBase, "exclude-base", false, "Exclude base image from vulnerability scanning (requires --file)")
-	cmd.Flags().StringVarP(&flags.dockerFilePath, "file", "f", "", "Dockerfile associated with image")
+	cmd.Flags().StringVarP(&flags.dockerFilePath, "file", "f", "", "Dockerfile associated with image, provides more detailed results")
 	cmd.Flags().BoolVar(&flags.jsonFormat, "json", false, "Output results in JSON format")
 	cmd.Flags().BoolVar(&flags.showVersion, "version", false, "Display version of the scan plugin")
-	cmd.Flags().BoolVar(&flags.forceOptIn, "accept-license", false, "Accept to using a third party scanning provider")
-	cmd.Flags().BoolVar(&flags.forceOptOut, "reject-license", false, "Reject to using a third party scanning provider")
+	cmd.Flags().BoolVar(&flags.forceOptIn, "accept-license", false, "Accept using a third party scanning provider")
+	cmd.Flags().BoolVar(&flags.forceOptOut, "reject-license", false, "Reject using a third party scanning provider")
 
 	return cmd
 }
