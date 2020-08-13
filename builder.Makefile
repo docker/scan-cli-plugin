@@ -48,7 +48,8 @@ e2e:
 	mkdir -p docker-config/scan
 	mkdir -p docker-config/cli-plugins
 	cp ./bin/${PLATFORM_BINARY} docker-config/cli-plugins/${BINARY}
-	$(VARS) gotestsum ./e2e $(RUN_TEST) -- -ldflags=$(LDFLAGS)
+	# TODO: gotestsum doesn't forward ldflags to go test with golang 1.15.0, so moving back to go test temporarily
+	$(VARS) go test ./e2e $(RUN_TEST) -ldflags=$(LDFLAGS)
 
 .PHONY: test-unit
 test-unit:
@@ -75,4 +76,4 @@ download:
 	curl https://github.com/snyk/snyk/releases/download/v${SNYK_DESKTOP_VERSION}/${SNYK_DOWNLOAD_NAME} -L -s -S -o docker-config/snyk-desktop/${SNYK_BINARY}
 	chmod +x docker-config/snyk-desktop/${SNYK_BINARY}
 	
-	GO111MODULE=on go get gotest.tools/gotestsum@v0.4.2
+	GO111MODULE=on go get gotest.tools/gotestsum@v${GOTESTSUM_VERSION}
