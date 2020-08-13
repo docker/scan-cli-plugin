@@ -131,16 +131,15 @@ func (s *snykProvider) Authenticate(token string) error {
 
 func (s *snykProvider) Scan(image string) error {
 	// check snyk token
-	var token string
+	cmd := s.newCommand(append(s.flags, image)...)
 	if authenticated, err := isAuthenticatedOnSnyk(); !authenticated || err != nil {
 		var err error
-		token, err = s.getToken()
+		token, err := s.getToken()
 		if err != nil {
 			return fmt.Errorf("failed to get DockerScanID: %s", err)
 		}
+		cmd.Env = append(os.Environ(), fmt.Sprintf("SNYK_DOCKER_TOKEN=%s", token))
 	}
-	cmd := s.newCommand(append(s.flags, image)...)
-	cmd.Env = append(os.Environ(), fmt.Sprintf("SNYK_DOCKER_TOKEN=%s", token))
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return checkCommandErr(cmd.Run())
