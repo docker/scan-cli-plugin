@@ -16,7 +16,7 @@
 #   limitations under the License.
 
 
-ARG GO_VERSION=1.14.6
+ARG GO_VERSION=1.15.0
 ARG CLI_VERSION=19.03.9
 ARG ALPINE_VERSION=3.12.0
 ARG GOLANGCI_LINT_VERSION=v1.27.0-alpine
@@ -90,7 +90,7 @@ COPY --from=cross-build /go/src/github.com/docker/scan-cli-plugin/dist /
 # GOTESTSUM
 ####
 FROM alpine:${ALPINE_VERSION} AS gotestsum
-ARG GOTESTSUM_VERSION=0.4.2
+ARG GOTESTSUM_VERSION=0.5.2
 
 RUN apk add -U --no-cache wget tar
 # install gotestsum
