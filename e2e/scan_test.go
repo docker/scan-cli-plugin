@@ -91,7 +91,7 @@ func TestScanSucceedWithDockerHub(t *testing.T) {
 	assert.Assert(t, strings.Contains(output, "vulnerability found"))
 
 	// Check that token file has been created
-	buf, err := ioutil.ReadFile(filepath.Join(configDir, "scan", "--accept-license", "scan-id.json"))
+	buf, err := ioutil.ReadFile(filepath.Join(configDir, "scan-id.json"))
 	assert.NilError(t, err)
 	var scanID struct {
 		Identifier string `json:"id"`
