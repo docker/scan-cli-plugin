@@ -45,7 +45,7 @@ type snykProvider struct {
 // NewSnykProvider returns a Snyk implementation of scan provider
 func NewSnykProvider(ops ...SnykProviderOps) (Provider, error) {
 	provider := snykProvider{
-		flags: []string{"test", "--docker"},
+		flags: []string{"container", "test"},
 	}
 	for _, op := range ops {
 		if err := op(&provider); err != nil {
