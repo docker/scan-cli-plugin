@@ -37,7 +37,8 @@ import (
 
 const (
 	ImageWithVulnerabilities      = "alpine:3.10.0"
-	ImageWithoutVulnerabilities   = "dockerscanci/scratch:1.0"          // FROM scratch
+	ImageWithoutVulnerabilities   = "hello-world"
+	InvalidImage                  = "dockerscanci/scratch:1.0"          // FROM scratch
 	ImageBaseImageVulnerabilities = "dockerscanci/base-image-vulns:1.0" // FROM alpine:3.10.0
 )
 
@@ -125,6 +126,12 @@ func TestScanWithSnyk(t *testing.T) {
 			contains: "no vulnerable paths found",
 		},
 		{
+			name:     "invalid-docker-archive",
+			image:    InvalidImage,
+			exitCode: 2,
+			contains: "Invalid Docker archive",
+		},
+		{
 			name:     "image-with-vulnerabilities",
 			image:    ImageWithVulnerabilities,
 			exitCode: 1,
@@ -134,7 +141,7 @@ func TestScanWithSnyk(t *testing.T) {
 			name:     "invalid-image-name",
 			image:    "scratch",
 			exitCode: 2,
-			contains: "image was not found locally and pulling failed",
+			contains: "manifest unknown",
 		},
 	}
 	for _, testCase := range testCases {
@@ -168,6 +175,12 @@ func TestScanJsonOutput(t *testing.T) {
 			name:     "image-without-vulnerabilities",
 			image:    ImageWithoutVulnerabilities,
 			exitCode: 0,
+			isEmpty:  true,
+		},
+		{
+			name:     "invalid-docker-archive",
+			image:    InvalidImage,
+			exitCode: 2,
 			isEmpty:  true,
 		},
 		{
