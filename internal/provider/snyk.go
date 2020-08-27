@@ -177,7 +177,7 @@ func (s *snykProvider) Version() (string, error) {
 
 func (s *snykProvider) newCommand(arg ...string) *exec.Cmd {
 	cmd := exec.CommandContext(s.context, s.path, arg...)
-	cmd.Env = append(os.Environ(), "NO_UPDATE_NOTIFIER=1", "SNYK_CFG_DISABLESUGGESTIONS=1")
+	cmd.Env = append(os.Environ(), "NO_UPDATE_NOTIFIER=true", "SNYK_CFG_DISABLESUGGESTIONS=true")
 	return cmd
 }
 
