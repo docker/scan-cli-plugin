@@ -50,6 +50,30 @@ Provider:   %s
 	assert.Equal(t, output, expected)
 }
 
+func TestVersionSnykOldBinary(t *testing.T) {
+	// Add old snyk binary to the $PATH
+	path := os.Getenv("PATH")
+	defer env.Patch(t, "PATH", fmt.Sprintf(pathFormat(), os.Getenv("SNYK_OLD_PATH"), path))()
+
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
+	defer cleanup()
+
+	createScanConfigFile(t, configDir)
+
+	// docker scan --version should fallback to desktop's Snyk binary and print a message on
+	// stderr stating that the user should upgrade Snyk.
+	cmd.Command = dockerCli.Command("scan", "--version")
+	output := icmd.RunCmd(cmd).Assert(t, icmd.Success).Combined()
+	expected := fmt.Sprintf(
+		`Version:    %s
+Git commit: %s
+Provider:   %s
+The Snyk version installed on your system does not match the docker scan requirements (>=1.385.0), using embedded Snyk version instead.
+`, internal.Version, internal.GitCommit, getProviderVersion("SNYK_DESKTOP_VERSION"))
+
+	assert.Equal(t, output, expected)
+}
+
 func TestVersionSnykDesktopBinary(t *testing.T) {
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()

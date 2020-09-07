@@ -117,8 +117,6 @@ FROM docker:${CLI_VERSION} AS cli
 # DOWNLOAD
 ####
 FROM golang:${GO_VERSION} AS download
-ARG SNYK_DESKTOP_VERSION=1.332.0
-ARG SNYK_USER_VERSION=1.334.0
 COPY builder.Makefile vars.mk ./
 RUN make -f builder.Makefile download
 
@@ -128,14 +126,8 @@ RUN make -f builder.Makefile download
 FROM builder AS e2e
 ARG TARGETOS
 ARG TARGETARCH
-ARG SNYK_DESKTOP_VERSION=1.332.0
-ENV SNYK_DESKTOP_VERSION=${SNYK_DESKTOP_VERSION}
-ARG SNYK_USER_VERSION=1.334.0
-ENV SNYK_USER_VERSION=${SNYK_USER_VERSION}
 ARG TAG_NAME
 ENV TAG_NAME=$TAG_NAME
-ENV SNYK_USER_PATH="/root/e2e"
-ENV SNYK_DESKTOP_PATH="/root/.docker/scan"
 ENV DOCKER_CONFIG="/root/.docker"
 
 # install snyk binaries

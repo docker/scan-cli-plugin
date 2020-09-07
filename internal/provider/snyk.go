@@ -27,12 +27,17 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/scan-cli-plugin/internal/authentication"
 	"github.com/docker/scan-cli-plugin/internal/hub"
 	"github.com/google/uuid"
 	"github.com/mitchellh/go-homedir"
+)
+
+const (
+	minimalSnykVersion = ">=1.385.0"
 )
 
 type snykProvider struct {
@@ -69,7 +74,7 @@ func WithContext(ctx context.Context) SnykProviderOps {
 // WithPath update the Snyk provider with the path from the configuration
 func WithPath(path string) SnykProviderOps {
 	return func(provider *snykProvider) error {
-		if p, err := exec.LookPath("snyk"); err == nil {
+		if p, err := exec.LookPath("snyk"); err == nil && checkUserSnykBinaryVersion(p) {
 			path = p
 		}
 		provider.path = path
@@ -220,4 +225,33 @@ func isAuthenticatedOnSnyk() (bool, error) {
 	}
 
 	return config.API != "", nil
+}
+
+func checkUserSnykBinaryVersion(path string) bool {
+	cmd := exec.Command(path, "--version")
+	buff := bytes.NewBuffer(nil)
+	cmd.Stdout = buff
+	cmd.Stderr = ioutil.Discard
+	if err := cmd.Run(); err != nil {
+		// an error occurred, so let's use the desktop binary
+		return false
+	}
+	ver, err := semver.NewVersion(cleanVersion(buff.String()))
+	if err != nil {
+		return false
+	}
+	constraint, err := semver.NewConstraint(minimalSnykVersion)
+	if err != nil {
+		return false
+	}
+	matchConstraint := constraint.Check(ver)
+	if !matchConstraint {
+		fmt.Fprintf(os.Stderr, "The Snyk version installed on your system does not match the docker scan requirements (%s), using embedded Snyk version instead.\n", minimalSnykVersion)
+	}
+	return matchConstraint
+}
+
+func cleanVersion(version string) string {
+	version = strings.TrimSpace(version)
+	return strings.Split(version, " ")[0]
 }
