@@ -129,6 +129,11 @@ func (s *snykProvider) Authenticate(token string) error {
 		}
 	}
 	cmd := s.newCommand("auth", token)
+	cmd.Env = append(cmd.Env,
+		"SNYK_UTM_MEDIUM=Partner",
+		"SNYK_UTM_SOURCE=Docker",
+		"SNYK_UTM_CAMPAIGN=Docker-Desktop-2020",
+		"SNYK_INTEGRATION_NAME=DOCKER_DESKTOP")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return checkCommandErr(cmd.Run())
