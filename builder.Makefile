@@ -36,6 +36,7 @@ endif
 VARS:= SNYK_DESKTOP_VERSION=${SNYK_DESKTOP_VERSION}\
 	SNYK_USER_VERSION=${SNYK_USER_VERSION}\
 	DOCKER_CONFIG=$(PWD)/docker-config\
+	SNYK_OLD_PATH=$(PWD)/docker-config/snyk-old\
 	SNYK_USER_PATH=$(PWD)/docker-config/snyk-user\
 	SNYK_DESKTOP_PATH=$(PWD)/docker-config/snyk-desktop
 
@@ -71,6 +72,10 @@ download:
 	mkdir -p docker-config/snyk-user
 	curl https://github.com/snyk/snyk/releases/download/v${SNYK_USER_VERSION}/${SNYK_DOWNLOAD_NAME} -L -s -S -o docker-config/snyk-user/${SNYK_BINARY}
 	chmod +x docker-config/snyk-user/${SNYK_BINARY}
+
+	mkdir -p docker-config/snyk-old
+	curl https://github.com/snyk/snyk/releases/download/v${SNYK_OLD_VERSION}/${SNYK_DOWNLOAD_NAME} -L -s -S -o docker-config/snyk-old/${SNYK_BINARY}
+	chmod +x docker-config/snyk-old/${SNYK_BINARY}
 
 	mkdir -p docker-config/snyk-desktop
 	curl https://github.com/snyk/snyk/releases/download/v${SNYK_DESKTOP_VERSION}/${SNYK_DOWNLOAD_NAME} -L -s -S -o docker-config/snyk-desktop/${SNYK_BINARY}

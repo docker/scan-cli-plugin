@@ -31,7 +31,7 @@ import (
 func TestSnykAuthentication(t *testing.T) {
 	// Add snyk binary to the path
 	path := os.Getenv("PATH")
-	defer env.Patch(t, "PATH", fmt.Sprintf(pathFormat(), os.Getenv("SNYK_USER_PATH"), path))()
+	defer env.Patch(t, "PATH", fmt.Sprintf(pathFormat(), os.Getenv("SNYK_DESKTOP_PATH"), path))()
 
 	// create Snyk config file with empty token
 	homeDir, cleanFunction := createSnykConfFile(t, "")
