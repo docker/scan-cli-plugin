@@ -132,8 +132,7 @@ func (s *snykProvider) Authenticate(token string) error {
 	cmd.Env = append(cmd.Env,
 		"SNYK_UTM_MEDIUM=Partner",
 		"SNYK_UTM_SOURCE=Docker",
-		"SNYK_UTM_CAMPAIGN=Docker-Desktop-2020",
-		"SNYK_INTEGRATION_NAME=DOCKER_DESKTOP")
+		"SNYK_UTM_CAMPAIGN=Docker-Desktop-2020")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return checkCommandErr(cmd.Run())
@@ -188,7 +187,10 @@ func (s *snykProvider) Version() (string, error) {
 
 func (s *snykProvider) newCommand(arg ...string) *exec.Cmd {
 	cmd := exec.CommandContext(s.context, s.path, arg...)
-	cmd.Env = append(os.Environ(), "NO_UPDATE_NOTIFIER=true", "SNYK_CFG_DISABLESUGGESTIONS=true")
+	cmd.Env = append(os.Environ(),
+		"NO_UPDATE_NOTIFIER=true",
+		"SNYK_CFG_DISABLESUGGESTIONS=true",
+		"SNYK_INTEGRATION_NAME=DOCKER_DESKTOP")
 	return cmd
 }
 
