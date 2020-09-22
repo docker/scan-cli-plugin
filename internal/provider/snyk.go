@@ -21,6 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -45,12 +46,16 @@ type snykProvider struct {
 	flags   []string
 	auth    types.AuthConfig
 	context context.Context
+	out     io.Writer
+	err     io.Writer
 }
 
 // NewSnykProvider returns a Snyk implementation of scan provider
 func NewSnykProvider(ops ...SnykProviderOps) (Provider, error) {
 	provider := snykProvider{
 		flags: []string{"container", "test"},
+		out:   os.Stdout,
+		err:   os.Stderr,
 	}
 	for _, op := range ops {
 		if err := op(&provider); err != nil {
@@ -67,6 +72,15 @@ type SnykProviderOps func(*snykProvider) error
 func WithContext(ctx context.Context) SnykProviderOps {
 	return func(provider *snykProvider) error {
 		provider.context = ctx
+		return nil
+	}
+}
+
+//WithStreams sets the out and err streams to be used by commands
+func WithStreams(out, err io.Writer) SnykProviderOps {
+	return func(provider *snykProvider) error {
+		provider.out = out
+		provider.err = err
 		return nil
 	}
 }
@@ -133,8 +147,8 @@ func (s *snykProvider) Authenticate(token string) error {
 		"SNYK_UTM_MEDIUM=Partner",
 		"SNYK_UTM_SOURCE=Docker",
 		"SNYK_UTM_CAMPAIGN=Docker-Desktop-2020")
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = s.out
+	cmd.Stderr = s.err
 	return checkCommandErr(cmd.Run())
 }
 
@@ -150,8 +164,8 @@ func (s *snykProvider) Scan(image string) error {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("SNYK_DOCKER_TOKEN=%s", token))
 	}
 
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd.Stdout = s.out
+	cmd.Stderr = s.err
 	return checkCommandErr(cmd.Run())
 }
 
