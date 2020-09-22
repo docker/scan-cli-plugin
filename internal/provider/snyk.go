@@ -148,8 +148,9 @@ func (s *snykProvider) Scan(image string) error {
 		if err != nil {
 			return fmt.Errorf("failed to get DockerScanID: %s", err)
 		}
-		cmd.Env = append(os.Environ(), fmt.Sprintf("SNYK_DOCKER_TOKEN=%s", token))
+		cmd.Env = append(cmd.Env, fmt.Sprintf("SNYK_DOCKER_TOKEN=%s", token))
 	}
+
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return checkCommandErr(cmd.Run())
