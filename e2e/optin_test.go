@@ -65,6 +65,7 @@ Version:`))
 func TestRefuseOptinWithDisableFlag(t *testing.T) {
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
+	createScanConfigFile(t, configDir)
 
 	// docker scan --version should exit immediately
 	cmd.Command = dockerCli.Command("scan", "--reject-license", "--version")
