@@ -37,8 +37,9 @@ func TestSnykAuthentication(t *testing.T) {
 	homeDir, cleanFunction := createSnykConfFile(t, "")
 	defer cleanFunction()
 
-	cmd, _, cleanup := dockerCli.createTestCmd()
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
+	createScanConfigFile(t, configDir)
 
 	token := os.Getenv("E2E_TEST_AUTH_TOKEN")
 	assert.Assert(t, token != "", "E2E_TEST_AUTH_TOKEN needs to be filled")
@@ -67,8 +68,9 @@ func TestAuthenticationFlagFailsWithImage(t *testing.T) {
 }
 
 func TestAuthenticationChecksToken(t *testing.T) {
-	cmd, _, cleanup := dockerCli.createTestCmd()
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
+	createScanConfigFile(t, configDir)
 
 	cmd.Command = dockerCli.Command("scan", "--accept-license", "--login", "--token", "invalid-token")
 	icmd.RunCmd(cmd).Assert(t, icmd.Expected{

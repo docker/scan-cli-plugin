@@ -93,15 +93,19 @@ Provider:   %s
 }
 
 func TestVersionWithoutSnykOrConfig(t *testing.T) {
-	cmd, _, cleanup := dockerCli.createTestCmd()
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
 
 	// docker scan --version should fail with a clean error
 	cmd.Command = dockerCli.Command("scan", "--accept-license", "--version")
-	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
+	output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{
 		ExitCode: 1,
-		Err:      "could not find Snyk binary",
-	})
+	}).Combined()
+	expected := fmt.Sprintf(
+		`failed to read docker scan configuration file. Please restart Docker Desktop: open %s/scan/config.json: no such file or directory
+`,
+		configDir)
+	assert.Equal(t, output, expected)
 }
 
 func getProviderVersion(env string) string {

@@ -39,14 +39,13 @@ func ReadConfigFile() (Config, error) {
 	var conf Config
 	path := filepath.Join(cliConfig.Dir(), "scan", "config.json")
 	buf, err := ioutil.ReadFile(path)
-	if os.IsNotExist(err) {
-		return conf, nil
-	}
 	if err != nil {
-		return conf, errors.Wrap(err, "failed to read docker scan configuration file")
+		_ = os.Remove(path)
+		return conf, errors.Wrap(err, "failed to read docker scan configuration file. Please restart Docker Desktop")
 	}
 	if err := json.Unmarshal(buf, &conf); err != nil {
-		return conf, errors.Wrapf(err, "invalid docker scan configuration file %s", path)
+		_ = os.Remove(path)
+		return conf, errors.Wrapf(err, "invalid docker scan configuration file %s. Please restart Docker Desktop", path)
 	}
 	return conf, nil
 }

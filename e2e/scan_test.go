@@ -49,6 +49,7 @@ func TestScanFailsNoAuthentication(t *testing.T) {
 
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
+	createScanConfigFile(t, configDir)
 
 	// write dockerCli config with authentication to a registry which isn't Hub
 	patchConfig(t, configDir, "com.example.registry", "invalid-user", "invalid-password")
@@ -66,8 +67,9 @@ func TestScanFailsWithCleanMessage(t *testing.T) {
 	_, cleanFunction := createSnykConfFile(t, "")
 	defer cleanFunction()
 
-	cmd, _, cleanup := dockerCli.createTestCmd()
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
+	createScanConfigFile(t, configDir)
 
 	cmd.Command = dockerCli.Command("scan", "--accept-license", "example:image")
 	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
