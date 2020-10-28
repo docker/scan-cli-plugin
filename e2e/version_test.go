@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"gotest.tools/v3/assert"
+	is "gotest.tools/v3/assert/cmp"
 	"gotest.tools/v3/env"
 	"gotest.tools/v3/icmd"
 
@@ -93,7 +94,7 @@ Provider:   %s
 }
 
 func TestVersionWithoutSnykOrConfig(t *testing.T) {
-	cmd, configDir, cleanup := dockerCli.createTestCmd()
+	cmd, _, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
 
 	// docker scan --version should fail with a clean error
@@ -101,11 +102,8 @@ func TestVersionWithoutSnykOrConfig(t *testing.T) {
 	output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{
 		ExitCode: 1,
 	}).Combined()
-	expected := fmt.Sprintf(
-		`failed to read docker scan configuration file. Please restart Docker Desktop: open %s/scan/config.json: no such file or directory
-`,
-		configDir)
-	assert.Equal(t, output, expected)
+	expected := "failed to read docker scan configuration file. Please restart Docker Desktop"
+	assert.Assert(t, is.Contains(output, expected))
 }
 
 func getProviderVersion(env string) string {
