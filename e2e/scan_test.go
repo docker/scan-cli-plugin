@@ -80,7 +80,6 @@ please login to Docker Hub using the Docker Login command`,
 }
 
 func TestScanSucceedWithDockerHub(t *testing.T) {
-	t.Skip("TODO: waiting for Hub ID generation")
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
 
@@ -91,7 +90,7 @@ func TestScanSucceedWithDockerHub(t *testing.T) {
 
 	cmd.Command = dockerCli.Command("scan", ImageWithVulnerabilities)
 	output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{ExitCode: 1}).Combined()
-	assert.Assert(t, strings.Contains(output, "vulnerability found"))
+	assert.Assert(t, strings.Contains(output, "vulnerability found"), output)
 
 	// Check that token file has been created
 	buf, err := ioutil.ReadFile(filepath.Join(configDir, "scan-id.json"))
