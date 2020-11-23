@@ -71,6 +71,9 @@ func TestScanFailsWithCleanMessage(t *testing.T) {
 	defer cleanup()
 	createScanConfigFile(t, configDir)
 
+	cmd.Command = dockerCli.Command("logout")
+	icmd.RunCmd(cmd).Assert(t, icmd.Success)
+
 	cmd.Command = dockerCli.Command("scan", "--accept-license", "example:image")
 	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
 		ExitCode: 1,
