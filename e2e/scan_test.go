@@ -30,6 +30,7 @@ import (
 	"github.com/docker/cli/cli/config/types"
 	"github.com/docker/scan-cli-plugin/config"
 	"gotest.tools/v3/assert"
+	"gotest.tools/v3/assert/cmp"
 	"gotest.tools/v3/env"
 	"gotest.tools/v3/fs"
 	"gotest.tools/v3/icmd"
@@ -83,7 +84,6 @@ please login to Docker Hub using the Docker Login command`,
 }
 
 func TestScanSucceedWithDockerHub(t *testing.T) {
-	t.Skip("TODO: waiting for Hub ID generation")
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
 
@@ -94,16 +94,7 @@ func TestScanSucceedWithDockerHub(t *testing.T) {
 
 	cmd.Command = dockerCli.Command("scan", ImageWithVulnerabilities)
 	output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{ExitCode: 1}).Combined()
-	assert.Assert(t, strings.Contains(output, "vulnerability found"))
-
-	// Check that token file has been created
-	buf, err := ioutil.ReadFile(filepath.Join(configDir, "scan-id.json"))
-	assert.NilError(t, err)
-	var scanID struct {
-		Identifier string `json:"id"`
-	}
-	assert.NilError(t, json.Unmarshal(buf, &scanID))
-	assert.Equal(t, len(strings.Split(scanID.Identifier, ".")), 3)
+	assert.Assert(t, cmp.Regexp("found .* vulnerabilities", output), output)
 }
 
 func TestScanWithSnyk(t *testing.T) {
