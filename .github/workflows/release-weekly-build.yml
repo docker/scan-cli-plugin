@@ -72,7 +72,7 @@ jobs:
           E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
           E2E_HUB_URL: ${{ secrets.E2E_HUB_URL }}
           E2E_HUB_USERNAME: ${{ secrets.E2E_HUB_USERNAME }}
-          E2E_HUB_TOKEN_TOKEN: ${{ secrets.E2E_HUB_TOKEN_TOKEN }}
+          E2E_HUB_TOKEN: ${{ secrets.E2E_HUB_TOKEN }}
         run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile build test-unit e2e
 
       - name: Upload binary artifact
