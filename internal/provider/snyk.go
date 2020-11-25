@@ -136,6 +136,14 @@ func WithDependencyTree() SnykProviderOps {
 	}
 }
 
+// WithFailOn only fail when there are vulnerabilities that can be fixed
+func WithFailOn(failOn string) SnykProviderOps {
+	return func(provider *snykProvider) error {
+		provider.flags = append(provider.flags, "--fail-on="+failOn)
+		return nil
+	}
+}
+
 func (s *snykProvider) Authenticate(token string) error {
 	if token != "" {
 		if _, err := uuid.Parse(token); err != nil {
