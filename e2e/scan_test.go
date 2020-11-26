@@ -93,8 +93,15 @@ func TestScanSucceedWithDockerHub(t *testing.T) {
 	patchConfig(t, configDir, os.Getenv("E2E_HUB_URL"), os.Getenv("E2E_HUB_USERNAME"), os.Getenv("E2E_HUB_TOKEN"))
 
 	cmd.Command = dockerCli.Command("scan", ImageWithVulnerabilities)
-	output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{ExitCode: 1}).Combined()
-	assert.Assert(t, cmp.Regexp("found .* vulnerabilities", output), output)
+	result := icmd.RunCmd(cmd)
+	if result.ExitCode == 1 {
+		assert.Assert(t, cmp.Regexp("found .* vulnerabilities", result.Combined()), result.Combined())
+	} else {
+		// We reach the monthly limits of 10 free scans
+		assert.Assert(t, result.ExitCode == 2)
+		assert.Assert(t, strings.Contains(result.Combined(), "You have reached the scan limit of 10 monthly scans without authentication."), result.Combined())
+	}
+
 }
 
 func TestScanWithSnyk(t *testing.T) {
