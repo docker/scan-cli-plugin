@@ -144,6 +144,14 @@ func WithFailOn(failOn string) SnykProviderOps {
 	}
 }
 
+// WithSeverity only reports vulnerabilities of the provided level or higher
+func WithSeverity(severity string) SnykProviderOps {
+	return func(provider *snykProvider) error {
+		provider.flags = append(provider.flags, "--severity-threshold="+severity)
+		return nil
+	}
+}
+
 func (s *snykProvider) Authenticate(token string) error {
 	if token != "" {
 		if _, err := uuid.Parse(token); err != nil {

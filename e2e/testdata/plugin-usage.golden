@@ -17,6 +17,8 @@ Options:
                           optional token (with --token), or web base
                           token if empty
       --reject-license    Reject using a third party scanning provider
+      --severity string   Only report vulnerabilities of provided level
+                          or higher (low|medium|high)
       --token string      Authentication token to login to the third
                           party scanning provider
       --version           Display version of the scan plugin
