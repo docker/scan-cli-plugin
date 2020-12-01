@@ -70,6 +70,7 @@ type options struct {
 	forceOptIn     bool
 	forceOptOut    bool
 	failOn         string
+	severity       string
 }
 
 func newScanCmd(ctx context.Context, dockerCli command.Cli) *cobra.Command {
@@ -99,6 +100,7 @@ func newScanCmd(ctx context.Context, dockerCli command.Cli) *cobra.Command {
 	cmd.Flags().BoolVar(&flags.forceOptIn, "accept-license", false, "Accept using a third party scanning provider")
 	cmd.Flags().BoolVar(&flags.forceOptOut, "reject-license", false, "Reject using a third party scanning provider")
 	cmd.Flags().StringVar(&flags.failOn, "fail-on", "", "Only fail when there are vulnerabilities that can be fixed (all|upgradable|patchable)")
+	cmd.Flags().StringVar(&flags.severity, "severity", "", "Only report vulnerabilities of provided level or higher (low|medium|high)")
 
 	return cmd
 }
@@ -133,6 +135,12 @@ func configureProvider(ctx context.Context, dockerCli command.Streams, flags opt
 			return nil, fmt.Errorf("--fail-on takes only 'all', 'upgradable' or 'patchable' values")
 		}
 		opts = append(opts, provider.WithFailOn(flags.failOn))
+	}
+	if flags.severity != "" {
+		if flags.severity != "low" && flags.severity != "medium" && flags.severity != "high" {
+			return nil, fmt.Errorf("--severity takes only 'low', 'medium' or 'high' values")
+		}
+		opts = append(opts, provider.WithSeverity(flags.severity))
 	}
 	return provider.NewSnykProvider(opts...)
 }

@@ -297,6 +297,43 @@ func TestScanWithFailOnBadValue(t *testing.T) {
 		Err:      "--fail-on takes only 'all', 'upgradable' or 'patchable' values"})
 }
 
+func TestScanWithSeverity(t *testing.T) {
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
+	}
+	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
+	defer cleanFunction()
+
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
+	defer cleanup()
+
+	createScanConfigFile(t, configDir)
+
+	cmd.Command = dockerCli.Command("scan", "--accept-license", "--severity=medium", ImageWithVulnerabilities)
+	output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{ExitCode: 1}).Combined()
+	assert.Assert(t, strings.Contains(output, "alpine:3.10.0")) // beginning of the dependency tree
+	assert.Assert(t, cmp.Regexp("found .* issues", output))
+	assert.Assert(t, !strings.Contains(output, "Low severity"))
+}
+
+func TestScanWithSeverityBadValue(t *testing.T) {
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
+	}
+	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
+	defer cleanFunction()
+
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
+	defer cleanup()
+
+	createScanConfigFile(t, configDir)
+
+	cmd.Command = dockerCli.Command("scan", "--accept-license", "--severity=unsupportedValue", ImageWithVulnerabilities)
+	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
+		ExitCode: 1,
+		Err:      "--severity takes only 'low', 'medium' or 'high' values"})
+}
+
 func createSnykConfFile(t *testing.T, token string) (*fs.Dir, func()) {
 	content := fmt.Sprintf(`{"api" : "%s"}`, token)
 	homeDir := fs.NewDir(t, t.Name(),
