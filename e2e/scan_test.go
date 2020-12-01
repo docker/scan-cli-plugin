@@ -84,6 +84,9 @@ please login to Docker Hub using the Docker Login command`,
 }
 
 func TestScanSucceedWithDockerHub(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Can't run on this ci platform (image does not exist fir the current platform)")
+	}
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
 
