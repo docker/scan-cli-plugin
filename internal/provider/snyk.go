@@ -136,14 +136,6 @@ func WithDependencyTree() SnykProviderOps {
 	}
 }
 
-// WithFailOn only fail when there are vulnerabilities that can be fixed
-func WithFailOn(failOn string) SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.flags = append(provider.flags, "--fail-on="+failOn)
-		return nil
-	}
-}
-
 // WithSeverity only reports vulnerabilities of the provided level or higher
 func WithSeverity(severity string) SnykProviderOps {
 	return func(provider *snykProvider) error {

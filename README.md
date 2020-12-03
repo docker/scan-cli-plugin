@@ -261,23 +261,6 @@ Licenses:          enabled
 Tested 200 dependencies for known issues, found 37 issues.
 ```  
 
-If your image has unfixed issues, and you need to bypass the error code, you can use the `--fail-on` flag.
-```console
-$ docker scan --fail-on=upgradable docker-scan:e2e
-...
-Organization:      docker-desktop-test
-Package manager:   deb
-Project name:      docker-image|docker-scan
-Docker image:      docker-scan:e2e
-Platform:          linux/amd64
-Licenses:          enabled
-
-Tested 200 dependencies for known issues, found 158 issues.
-
-❯ echo $?
-0
-```
-
 ### Provider Authentication
 
 If you have an existing Snyk account, you can directly use your auth token  

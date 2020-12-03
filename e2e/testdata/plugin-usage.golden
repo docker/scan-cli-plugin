@@ -8,8 +8,6 @@ Options:
       --dependency-tree   Show dependency tree with scan results
       --exclude-base      Exclude base image from vulnerability scanning
                           (requires --file)
-      --fail-on string    Only fail when there are vulnerabilities that
-                          can be fixed (all|upgradable|patchable)
   -f, --file string       Dockerfile associated with image, provides more
                           detailed results
       --json              Output results in JSON format
