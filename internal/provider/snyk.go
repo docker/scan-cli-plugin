@@ -144,6 +144,14 @@ func WithSeverity(severity string) SnykProviderOps {
 	}
 }
 
+// WithGroupIssues groups same issues in a single one when using --json flag
+func WithGroupIssues() SnykProviderOps {
+	return func(provider *snykProvider) error {
+		provider.flags = append(provider.flags, "--group-issues")
+		return nil
+	}
+}
+
 func (s *snykProvider) Authenticate(token string) error {
 	if token != "" {
 		if _, err := uuid.Parse(token); err != nil {

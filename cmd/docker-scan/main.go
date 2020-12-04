@@ -70,6 +70,7 @@ type options struct {
 	forceOptIn     bool
 	forceOptOut    bool
 	severity       string
+	groupIssues    bool
 }
 
 func newScanCmd(ctx context.Context, dockerCli command.Cli) *cobra.Command {
@@ -99,6 +100,7 @@ func newScanCmd(ctx context.Context, dockerCli command.Cli) *cobra.Command {
 	cmd.Flags().BoolVar(&flags.forceOptIn, "accept-license", false, "Accept using a third party scanning provider")
 	cmd.Flags().BoolVar(&flags.forceOptOut, "reject-license", false, "Reject using a third party scanning provider")
 	cmd.Flags().StringVar(&flags.severity, "severity", "", "Only report vulnerabilities of provided level or higher (low|medium|high)")
+	cmd.Flags().BoolVar(&flags.groupIssues, "group-issues", false, "Aggregate duplicated vulnerabilities and group them to a single one (requires --json)")
 
 	return cmd
 }
@@ -116,6 +118,11 @@ func configureProvider(ctx context.Context, dockerCli command.Streams, flags opt
 	opts = append(opts, options...)
 	if flags.jsonFormat {
 		opts = append(opts, provider.WithJSON())
+		if flags.groupIssues {
+			opts = append(opts, provider.WithGroupIssues())
+		}
+	} else if flags.groupIssues {
+		return nil, fmt.Errorf("--json flag is mandatory to use --group-issues flag")
 	}
 	if flags.dockerFilePath != "" {
 		opts = append(opts, provider.WithDockerFile(flags.dockerFilePath))
