@@ -10,6 +10,8 @@ Options:
                           (requires --file)
   -f, --file string       Dockerfile associated with image, provides more
                           detailed results
+      --group-issues      Aggregate duplicated vulnerabilities and group
+                          them to a single one (requires --json)
       --json              Output results in JSON format
       --login             Authenticate to the scan provider using an
                           optional token (with --token), or web base

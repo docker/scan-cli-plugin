@@ -301,6 +301,44 @@ func TestScanWithSeverityBadValue(t *testing.T) {
 		Err:      "--severity takes only 'low', 'medium' or 'high' values"})
 }
 
+func TestScanWithJsonAndGroupIssues(t *testing.T) {
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
+	}
+	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
+	defer cleanFunction()
+
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
+	defer cleanup()
+
+	createScanConfigFile(t, configDir)
+
+	cmd.Command = dockerCli.Command("scan", "--accept-license", "--json", "--group-issues", ImageWithVulnerabilities)
+	output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{ExitCode: 1}).Combined()
+	assert.Assert(t, strings.Contains(output, "vulnerable dependency paths")) // beginning of the dependency tree
+	assert.Assert(t, strings.Contains(output, `"from": [
+        [
+          "docker-image|alpine@3.10.0",`))
+}
+
+func TestScanWithGroupIssues(t *testing.T) {
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
+	}
+	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
+	defer cleanFunction()
+
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
+	defer cleanup()
+
+	createScanConfigFile(t, configDir)
+
+	cmd.Command = dockerCli.Command("scan", "--accept-license", "--group-issues", ImageBaseImageVulnerabilities)
+	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
+		ExitCode: 1,
+		Err:      "--json flag is mandatory to use --group-issues flag"})
+}
+
 func createSnykConfFile(t *testing.T, token string) (*fs.Dir, func()) {
 	content := fmt.Sprintf(`{"api" : "%s"}`, token)
 	homeDir := fs.NewDir(t, t.Name(),
