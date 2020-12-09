@@ -18,10 +18,8 @@ package provider
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -29,8 +27,6 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/scan-cli-plugin/internal/authentication"
 	"github.com/docker/scan-cli-plugin/internal/hub"
 	"github.com/google/uuid"
@@ -42,23 +38,17 @@ const (
 )
 
 type snykProvider struct {
-	path    string
-	flags   []string
-	auth    types.AuthConfig
-	context context.Context
-	out     io.Writer
-	err     io.Writer
+	Options
+	path string
 }
 
 // NewSnykProvider returns a Snyk implementation of scan provider
-func NewSnykProvider(ops ...SnykProviderOps) (Provider, error) {
+func NewSnykProvider(defaultProvider Options, snykOps ...SnykProviderOps) (Provider, error) {
 	provider := snykProvider{
-		flags: []string{"container", "test"},
-		out:   os.Stdout,
-		err:   os.Stderr,
+		Options: defaultProvider,
 	}
-	for _, op := range ops {
-		if err := op(&provider); err != nil {
+	for _, snykOp := range snykOps {
+		if err := snykOp(&provider); err != nil {
 			return nil, err
 		}
 	}
@@ -68,23 +58,6 @@ func NewSnykProvider(ops ...SnykProviderOps) (Provider, error) {
 // SnykProviderOps function taking a pointer to a Snyk Provider and returning an error if needed
 type SnykProviderOps func(*snykProvider) error
 
-//WithContext update the Snyk provider with a cancelable context
-func WithContext(ctx context.Context) SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.context = ctx
-		return nil
-	}
-}
-
-//WithStreams sets the out and err streams to be used by commands
-func WithStreams(out, err io.Writer) SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.out = out
-		provider.err = err
-		return nil
-	}
-}
-
 // WithPath update the Snyk provider with the path from the configuration
 func WithPath(path string) SnykProviderOps {
 	return func(provider *snykProvider) error {
@@ -92,62 +65,6 @@ func WithPath(path string) SnykProviderOps {
 			path = p
 		}
 		provider.path = path
-		return nil
-	}
-}
-
-// WithAuthConfig update the Snyk provider with the auth configuration from Docker CLI
-func WithAuthConfig(authResolver func(*registry.IndexInfo) types.AuthConfig) SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.auth = authResolver(hub.GetInstance().RegistryInfo)
-		return nil
-	}
-}
-
-// WithJSON set JSONFormat to display scan result in JSON
-func WithJSON() SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.flags = append(provider.flags, "--json")
-		return nil
-	}
-}
-
-// WithoutBaseImageVulnerabilities don't display the vulnerabilities from the base image
-func WithoutBaseImageVulnerabilities() SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.flags = append(provider.flags, "--exclude-base-image-vulns")
-		return nil
-	}
-}
-
-// WithDockerFile improve result by providing a Dockerfile
-func WithDockerFile(path string) SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.flags = append(provider.flags, "--file="+path)
-		return nil
-	}
-}
-
-// WithDependencyTree shows the dependency tree before scan results
-func WithDependencyTree() SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.flags = append(provider.flags, "--print-deps")
-		return nil
-	}
-}
-
-// WithSeverity only reports vulnerabilities of the provided level or higher
-func WithSeverity(severity string) SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.flags = append(provider.flags, "--severity-threshold="+severity)
-		return nil
-	}
-}
-
-// WithGroupIssues groups same issues in a single one when using --json flag
-func WithGroupIssues() SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.flags = append(provider.flags, "--group-issues")
 		return nil
 	}
 }

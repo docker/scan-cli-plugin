@@ -105,17 +105,20 @@ func newScanCmd(ctx context.Context, dockerCli command.Cli) *cobra.Command {
 	return cmd
 }
 
-func configureProvider(ctx context.Context, dockerCli command.Streams, flags options, options ...provider.SnykProviderOps) (provider.Provider, error) {
+func configureProvider(ctx context.Context, dockerCli command.Streams, flags options, options ...provider.Ops) (provider.Provider, error) {
 	conf, err := checkConsent(flags, dockerCli)
 	if err != nil {
 		return nil, err
 	}
 
-	opts := []provider.SnykProviderOps{
+	opts := []provider.Ops{
 		provider.WithContext(ctx),
-		provider.WithPath(conf.Path),
 	}
 	opts = append(opts, options...)
+	snykOpts := []provider.SnykProviderOps{
+		provider.WithPath(conf.Path),
+	}
+
 	if flags.jsonFormat {
 		opts = append(opts, provider.WithJSON())
 		if flags.groupIssues {
@@ -141,7 +144,11 @@ func configureProvider(ctx context.Context, dockerCli command.Streams, flags opt
 		}
 		opts = append(opts, provider.WithSeverity(flags.severity))
 	}
-	return provider.NewSnykProvider(opts...)
+	defaultProvider, err := provider.NewProvider(opts...)
+	if err != nil {
+		return nil, err
+	}
+	return provider.NewSnykProvider(defaultProvider, snykOpts...)
 }
 
 func checkConsent(flags options, dockerCli command.Streams) (config.Config, error) {
