@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime"
 	"syscall"
 
 	"github.com/docker/cli/cli-plugins/manager"
@@ -113,12 +114,9 @@ func configureProvider(ctx context.Context, dockerCli command.Streams, flags opt
 
 	opts := []provider.Ops{
 		provider.WithContext(ctx),
-	}
-	opts = append(opts, options...)
-	snykOpts := []provider.SnykProviderOps{
 		provider.WithPath(conf.Path),
 	}
-
+	opts = append(opts, options...)
 	if flags.jsonFormat {
 		opts = append(opts, provider.WithJSON())
 		if flags.groupIssues {
@@ -148,7 +146,10 @@ func configureProvider(ctx context.Context, dockerCli command.Streams, flags opt
 	if err != nil {
 		return nil, err
 	}
-	return provider.NewSnykProvider(defaultProvider, snykOpts...)
+	if runtime.GOOS == "linux" && !provider.UseExternalBinary(defaultProvider) {
+		return provider.NewDockerSnykProvider(defaultProvider)
+	}
+	return provider.NewSnykProvider(defaultProvider)
 }
 
 func checkConsent(flags options, dockerCli command.Streams) (config.Config, error) {

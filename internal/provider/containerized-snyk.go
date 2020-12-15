@@ -36,21 +36,46 @@ type dockerSnykProvider struct {
 	Options
 }
 
-// NewDockerSnykProvider returns a containerized Snyk implementation of scan provider
-func NewDockerSnykProvider(ops ...Ops) (Provider, error) {
-	provider := dockerSnykProvider{
-		Options: Options{
-			flags: []string{"container", "test"},
-			out:   os.Stdout,
-			err:   os.Stderr,
-		},
-	}
-	for _, op := range ops {
-		if err := op(&provider.Options); err != nil {
-			return nil, err
-		}
-	}
+type dockerCmd struct {
+	cmdDocker string
+	cmd       string
+	image     string
+	flags     dockerFlags
+	envs      dockerEnvs
+	args      dockerArgs
+}
 
+type dockerFlags []string
+type dockerEnvs []string
+type dockerArgs []string
+
+func newDockerCmd(cmdDocker string, image string, cmd string, flags dockerFlags, envs dockerEnvs, args ...string) dockerCmd {
+	return dockerCmd{
+		cmdDocker: cmdDocker,
+		cmd:       cmd,
+		image:     image,
+		flags:     flags,
+		envs:      envs,
+		args:      args,
+	}
+}
+
+func (d dockerCmd) toShellCmd() []string {
+	arguments := []string{d.cmdDocker}
+	arguments = append(arguments, d.flags...)
+	for _, env := range d.envs {
+		arguments = append(arguments, "-e", env)
+	}
+	arguments = append(arguments, d.image, d.cmd)
+	arguments = append(arguments, d.args...)
+	return arguments
+}
+
+// NewDockerSnykProvider returns a containerized Snyk implementation of scan provider
+func NewDockerSnykProvider(defaultProvider Options) (Provider, error) {
+	provider := dockerSnykProvider{
+		Options: defaultProvider,
+	}
 	return &provider, nil
 }
 
@@ -64,15 +89,47 @@ func (d *dockerSnykProvider) Authenticate(token string) error {
 			return &invalidTokenError{token}
 		}
 	}
-	/*cmd := s.newCommand("auth", token)
-	cmd.Env = append(cmd.Env,
+	containerName := fmt.Sprintf("synk-auth-%s", uuid.New().String())
+
+	err := d.runAuthenticate(token, containerName)
+	if err != nil {
+		return err
+	}
+	return d.runCopySnykConfig(containerName)
+}
+
+func (d *dockerSnykProvider) runAuthenticate(token string, containerName string) error {
+	envVars := dockerEnvs{
+		"NO_UPDATE_NOTIFIER=true",
+		"SNYK_CFG_DISABLESUGGESTIONS=true",
+		"SNYK_INTEGRATION_NAME=DOCKER_DESKTOP",
 		"SNYK_UTM_MEDIUM=Partner",
 		"SNYK_UTM_SOURCE=Docker",
-		"SNYK_UTM_CAMPAIGN=Docker-Desktop-2020")
-	cmd.Stdout = s.out
-	cmd.Stderr = s.err
-	return checkCommandErr(cmd.Run())*/
-	return nil
+		"SNYK_UTM_CAMPAIGN=Docker-Desktop-2020",
+	}
+	flags := dockerFlags{"-i", "--name", containerName,
+		"-v", "/var/run/docker.sock:/var/run/docker.sock",
+	}
+	cmdDocker := newDockerCmd("run", "snyk/snyk:alpine", "snyk", flags, envVars, "auth", token)
+	cmd := exec.CommandContext(d.context, "docker", cmdDocker.toShellCmd()...)
+	cmd.Stdout = d.out
+	cmd.Stderr = d.err
+	return checkCommandErr(cmd.Run())
+}
+
+func (d *dockerSnykProvider) runCopySnykConfig(containerName string) error {
+	home, err := homedir.Dir()
+	if err != nil {
+		return err
+	}
+	cpArgs := []string{"cp", fmt.Sprintf("%s:/root/.config/configstore/snyk.json", containerName),
+		fmt.Sprintf("%s/.config/configstore/snyk.json", home)}
+	cmd := exec.CommandContext(d.context, "docker", cpArgs...)
+	if err = cmd.Run(); err != nil {
+		return err
+	}
+	cmd = exec.CommandContext(d.context, "docker", "rm", containerName)
+	return cmd.Run()
 }
 
 func (d *dockerSnykProvider) Scan(image string) error {
@@ -114,18 +171,14 @@ func (d *dockerSnykProvider) Version() (string, error) {
 }
 
 func (d *dockerSnykProvider) newCommand(envVars []string, arg ...string) *exec.Cmd {
-	args := []string{"run", "-i", "--rm", "-e", "NO_UPDATE_NOTIFIER=true", "-e", "SNYK_CFG_DISABLESUGGESTIONS=true",
-		"-e", "SNYK_INTEGRATION_NAME=DOCKER_DESKTOP",
-		"-v", "/var/run/docker.sock:/var/run/docker.sock",
-	}
-	for _, envVar := range envVars {
-		args = append(args, "-e", envVar)
-	}
+	flags := []string{"-i", "--rm", "-v", "/var/run/docker.sock:/var/run/docker.sock"}
+	defaultEnvs := []string{"NO_UPDATE_NOTIFIER=true", "SNYK_CFG_DISABLESUGGESTIONS=true",
+		"SNYK_INTEGRATION_NAME=DOCKER_DESKTOP"}
+	envVars = append(envVars, defaultEnvs...)
 
-	args = append(args, "snyk/snyk:alpine")
-	args = append(args, "snyk")
-	args = append(args, arg...)
-	cmd := exec.CommandContext(d.context, "docker", args...)
+	cmdDocker := newDockerCmd("run", "snyk/snyk:alpine", "snyk", flags,
+		envVars, arg...)
+	cmd := exec.CommandContext(d.context, "docker", cmdDocker.toShellCmd()...)
 	return cmd
 }
 

@@ -20,6 +20,7 @@ import (
 	"context"
 	"io"
 	"os"
+	"os/exec"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/registry"
@@ -40,6 +41,7 @@ type Options struct {
 	context context.Context
 	out     io.Writer
 	err     io.Writer
+	path    string
 }
 
 // NewProvider returns default provider options setup with the give options
@@ -55,6 +57,11 @@ func NewProvider(options ...Ops) (Options, error) {
 		}
 	}
 	return provider, nil
+}
+
+// UseExternalBinary return true if the provider path option is setup
+func UseExternalBinary(providerOpts Options) bool {
+	return providerOpts.path != ""
 }
 
 // Ops defines options to setup a provider
@@ -137,6 +144,17 @@ func WithSeverity(severity string) Ops {
 func WithGroupIssues() Ops {
 	return func(provider *Options) error {
 		provider.flags = append(provider.flags, "--group-issues")
+		return nil
+	}
+}
+
+// WithPath update the provider binary with the path from the configuration
+func WithPath(path string) Ops {
+	return func(provider *Options) error {
+		if p, err := exec.LookPath("snyk"); err == nil && checkUserSnykBinaryVersion(p) {
+			path = p
+		}
+		provider.path = path
 		return nil
 	}
 }

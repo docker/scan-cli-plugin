@@ -39,7 +39,6 @@ const (
 
 type snykProvider struct {
 	Options
-	path string
 }
 
 // NewSnykProvider returns a Snyk implementation of scan provider
@@ -57,17 +56,6 @@ func NewSnykProvider(defaultProvider Options, snykOps ...SnykProviderOps) (Provi
 
 // SnykProviderOps function taking a pointer to a Snyk Provider and returning an error if needed
 type SnykProviderOps func(*snykProvider) error
-
-// WithPath update the Snyk provider with the path from the configuration
-func WithPath(path string) SnykProviderOps {
-	return func(provider *snykProvider) error {
-		if p, err := exec.LookPath("snyk"); err == nil && checkUserSnykBinaryVersion(p) {
-			path = p
-		}
-		provider.path = path
-		return nil
-	}
-}
 
 func (s *snykProvider) Authenticate(token string) error {
 	if token != "" {
