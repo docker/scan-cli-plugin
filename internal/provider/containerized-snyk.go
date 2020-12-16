@@ -49,11 +49,11 @@ type dockerFlags []string
 type dockerEnvs []string
 type dockerArgs []string
 
-func newDockerCmd(cmdDocker string, image string, cmd string, flags dockerFlags, envs dockerEnvs, args ...string) dockerCmd {
+func newDockerCmd(cmdDocker string, cmd string, flags dockerFlags, envs dockerEnvs, args ...string) dockerCmd {
 	return dockerCmd{
 		cmdDocker: cmdDocker,
 		cmd:       cmd,
-		image:     image,
+		image:     "snyk/snyk:alpine",
 		flags:     flags,
 		envs:      envs,
 		args:      args,
@@ -66,7 +66,9 @@ func (d dockerCmd) toShellCmd() []string {
 	for _, env := range d.envs {
 		arguments = append(arguments, "-e", env)
 	}
-	arguments = append(arguments, d.image, d.cmd)
+	if d.cmdDocker != "start" {
+		arguments = append(arguments, d.image, d.cmd)
+	}
 	arguments = append(arguments, d.args...)
 	return arguments
 }
@@ -89,16 +91,30 @@ func (d *dockerSnykProvider) Authenticate(token string) error {
 			return &invalidTokenError{token}
 		}
 	}
-	containerName := fmt.Sprintf("synk-auth-%s", uuid.New().String())
-
-	err := d.runAuthenticate(token, containerName)
+	home, err := homedir.Dir()
 	if err != nil {
 		return err
 	}
-	return d.runCopySnykConfig(containerName)
+	containerName := fmt.Sprintf("synk-auth-%s", uuid.New().String())
+
+	err = d.createContainer(token, containerName)
+	if err != nil {
+		return err
+	}
+
+	err = d.copySnykConfigToContainer(containerName, home)
+	if err != nil {
+		return d.deleteContainer(containerName, err)
+	}
+
+	err = d.startAuthenticateContainer(containerName)
+	if err != nil {
+		return d.deleteContainer(containerName, err)
+	}
+	return d.copySnykConfigToHost(containerName, home)
 }
 
-func (d *dockerSnykProvider) runAuthenticate(token string, containerName string) error {
+func (d *dockerSnykProvider) createContainer(token string, containerName string) error {
 	envVars := dockerEnvs{
 		"NO_UPDATE_NOTIFIER=true",
 		"SNYK_CFG_DISABLESUGGESTIONS=true",
@@ -109,27 +125,50 @@ func (d *dockerSnykProvider) runAuthenticate(token string, containerName string)
 	}
 	flags := dockerFlags{"-i", "--name", containerName,
 		"-v", "/var/run/docker.sock:/var/run/docker.sock",
+		"-v", "TMP:/root/.config/configstore",
 	}
-	cmdDocker := newDockerCmd("run", "snyk/snyk:alpine", "snyk", flags, envVars, "auth", token)
+	cmdDocker := newDockerCmd("create", "snyk", flags, envVars, "auth", token)
+	cmd := exec.CommandContext(d.context, "docker", cmdDocker.toShellCmd()...)
+	return cmd.Run()
+}
+func (d *dockerSnykProvider) copySnykConfigToContainer(containerName string, home string) error {
+	configFile := fmt.Sprintf("%s/.config/configstore/snyk.json", home)
+	if _, err := os.Stat(configFile); err == nil {
+		cpArgs := []string{"cp", "-a", configFile,
+			fmt.Sprintf("%s:/root/.config/configstore/snyk.json", containerName),
+		}
+		cmd := exec.CommandContext(d.context, "docker", cpArgs...)
+		return cmd.Run()
+	}
+	return nil
+}
+
+func (d *dockerSnykProvider) startAuthenticateContainer(containerName string) error {
+	flags := dockerFlags{"-a", containerName}
+	cmdDocker := newDockerCmd("start", "", flags, dockerEnvs{})
 	cmd := exec.CommandContext(d.context, "docker", cmdDocker.toShellCmd()...)
 	cmd.Stdout = d.out
 	cmd.Stderr = d.err
 	return checkCommandErr(cmd.Run())
 }
 
-func (d *dockerSnykProvider) runCopySnykConfig(containerName string) error {
-	home, err := homedir.Dir()
-	if err != nil {
-		return err
-	}
+func (d *dockerSnykProvider) copySnykConfigToHost(containerName string, home string) error {
 	cpArgs := []string{"cp", fmt.Sprintf("%s:/root/.config/configstore/snyk.json", containerName),
 		fmt.Sprintf("%s/.config/configstore/snyk.json", home)}
 	cmd := exec.CommandContext(d.context, "docker", cpArgs...)
-	if err = cmd.Run(); err != nil {
-		return err
+	if err := cmd.Run(); err != nil {
+		return d.deleteContainer(containerName, err)
 	}
-	cmd = exec.CommandContext(d.context, "docker", "rm", containerName)
-	return cmd.Run()
+	return d.deleteContainer(containerName, nil)
+}
+
+func (d *dockerSnykProvider) deleteContainer(containerName string, initialError error) error {
+	cmd := exec.CommandContext(d.context, "docker", "rm", containerName)
+	err := cmd.Run()
+	if initialError != nil {
+		return initialError
+	}
+	return err
 }
 
 func (d *dockerSnykProvider) Scan(image string) error {
@@ -176,7 +215,7 @@ func (d *dockerSnykProvider) newCommand(envVars []string, arg ...string) *exec.C
 		"SNYK_INTEGRATION_NAME=DOCKER_DESKTOP"}
 	envVars = append(envVars, defaultEnvs...)
 
-	cmdDocker := newDockerCmd("run", "snyk/snyk:alpine", "snyk", flags,
+	cmdDocker := newDockerCmd("run", "snyk", flags,
 		envVars, arg...)
 	cmd := exec.CommandContext(d.context, "docker", cmdDocker.toShellCmd()...)
 	return cmd
