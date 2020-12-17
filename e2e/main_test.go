@@ -38,6 +38,10 @@ type dockerCliCommand struct {
 }
 
 func (d dockerCliCommand) createTestCmd() (icmd.Cmd, string, func()) {
+	return d.createTestCommand(true)
+}
+
+func (d dockerCliCommand) createTestCommand(withSnykBinary bool) (icmd.Cmd, string, func()) {
 	configDir, err := ioutil.TempDir("", "config")
 	if err != nil {
 		panic(err)
@@ -46,7 +50,9 @@ func (d dockerCliCommand) createTestCmd() (icmd.Cmd, string, func()) {
 		panic(err)
 	}
 	sourceDir := os.Getenv("SNYK_DESKTOP_PATH")
-	copyBinary("snyk", sourceDir, filepath.Join(configDir, "scan"))
+	if withSnykBinary {
+		copyBinary("snyk", sourceDir, filepath.Join(configDir, "scan"))
+	}
 
 	configFilePath := filepath.Join(configDir, "config.json")
 	dockerConfig := dockerConfigFile.ConfigFile{

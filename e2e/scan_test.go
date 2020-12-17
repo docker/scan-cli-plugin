@@ -339,12 +339,68 @@ func TestScanWithGroupIssues(t *testing.T) {
 		Err:      "--json flag is mandatory to use --group-issues flag"})
 }
 
-func createSnykConfFile(t *testing.T, token string) (*fs.Dir, func()) {
+func TestScanWithContainerizedSnyk(t *testing.T) {
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
+	}
+	homeDir, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
+	defer cleanFunction()
+
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
+	defer cleanup()
+	createScanConfigFileOptinAndPath(t, configDir, true, "")
+
+	testCases := []struct {
+		name     string
+		image    string
+		exitCode int
+		contains string
+	}{
+		{
+			name:     "image-without-vulnerabilities",
+			image:    ImageWithoutVulnerabilities,
+			exitCode: 0,
+			contains: "no vulnerable paths found",
+		},
+		{
+			name:     "invalid-docker-archive",
+			image:    InvalidImage,
+			exitCode: 2,
+			contains: "Invalid Docker archive",
+		},
+		{
+			name:     "image-with-vulnerabilities",
+			image:    ImageWithVulnerabilities,
+			exitCode: 1,
+			contains: "vulnerability found",
+		},
+		{
+			name:     "invalid-image-name",
+			image:    "scratch",
+			exitCode: 2,
+			contains: "manifest unknown",
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			cmd.Command = dockerCli.Command("scan", testCase.image)
+			cmd.Env = append(cmd.Env, fmt.Sprintf("HOME=%s", homeDir.Path()))
+			output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{ExitCode: testCase.exitCode}).Combined()
+			assert.Assert(t, strings.Contains(output, testCase.contains))
+		})
+	}
+}
+
+func createSnykConfDirectories(t *testing.T, withConfFile bool, token string) (*fs.Dir, func()) {
 	content := fmt.Sprintf(`{"api" : "%s"}`, token)
+	var confFiles []fs.PathOp
+	if withConfFile {
+		confFiles = append(confFiles, fs.WithFile("snyk.json", content))
+	}
 	homeDir := fs.NewDir(t, t.Name(),
 		fs.WithDir(".config",
-			fs.WithDir("configstore",
-				fs.WithFile("snyk.json", content))))
+			fs.WithDir("configstore", confFiles...)))
+
 	homeFunc := env.Patch(t, "HOME", homeDir.Path())
 	userProfileFunc := env.Patch(t, "USERPROFILE", homeDir.Path())
 	cleanup := func() {
@@ -354,6 +410,10 @@ func createSnykConfFile(t *testing.T, token string) (*fs.Dir, func()) {
 	}
 
 	return homeDir, cleanup
+}
+
+func createSnykConfFile(t *testing.T, token string) (*fs.Dir, func()) {
+	return createSnykConfDirectories(t, true, token)
 }
 
 func patchConfig(t *testing.T, configDir, url, userName, password string) {
@@ -379,8 +439,12 @@ func createScanConfigFile(t *testing.T, configDir string) {
 }
 
 func createScanConfigFileOptin(t *testing.T, configDir string, optin bool) {
+	createScanConfigFileOptinAndPath(t, configDir, optin, filepath.Join(configDir, "scan", "snyk"))
+}
+
+func createScanConfigFileOptinAndPath(t *testing.T, configDir string, optin bool, path string) {
 	conf := config.Config{
-		Path:  filepath.Join(configDir, "scan", "snyk"),
+		Path:  path,
 		Optin: optin,
 	}
 	buf, err := json.MarshalIndent(conf, "", "  ")

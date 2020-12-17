@@ -78,3 +78,52 @@ func TestAuthenticationChecksToken(t *testing.T) {
 		Err:      `invalid authentication token "invalid-token"`,
 	})
 }
+
+func TestAuthWithContainerizedSnyk(t *testing.T) {
+	cmd, configDir, cleanup := dockerCli.createTestCommand(false)
+	defer cleanup()
+	createScanConfigFileOptinAndPath(t, configDir, true, "")
+
+	// create Snyk config directories without the config file
+	homeDir, cleanFunction := createSnykConfDirectories(t, false, "")
+	defer cleanFunction()
+
+	token := os.Getenv("E2E_TEST_AUTH_TOKEN")
+	assert.Assert(t, token != "", "E2E_TEST_AUTH_TOKEN needs to be filled")
+
+	cmd.Command = dockerCli.Command("scan", "--accept-license", "--login", "--token", token)
+	cmd.Env = append(cmd.Env, fmt.Sprintf("HOME=%s", homeDir.Path()))
+	icmd.RunCmd(cmd).Assert(t, icmd.Success)
+
+	// snyk config file should be created
+	buff, err := ioutil.ReadFile(homeDir.Join(".config", "configstore", "snyk.json"))
+	assert.NilError(t, err)
+	assert.Assert(t, strings.Contains(string(buff), token))
+}
+
+func TestAuthWithContainerSnykFlagFailsWithImage(t *testing.T) {
+	cmd, configDir, cleanup := dockerCli.createTestCommand(false)
+	defer cleanup()
+	createScanConfigFileOptinAndPath(t, configDir, true, "")
+
+	token := os.Getenv("E2E_TEST_AUTH_TOKEN")
+	assert.Assert(t, token != "", "E2E_TEST_AUTH_TOKEN needs to be filled")
+
+	cmd.Command = dockerCli.Command("scan", "--accept-license", "--login", "--token", token, "example:image")
+	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
+		ExitCode: 1,
+		Err:      "--login flag expects no argument",
+	})
+}
+
+func TestAuthWithContainerSnykChecksToken(t *testing.T) {
+	cmd, configDir, cleanup := dockerCli.createTestCommand(false)
+	defer cleanup()
+	createScanConfigFileOptinAndPath(t, configDir, true, "")
+
+	cmd.Command = dockerCli.Command("scan", "--accept-license", "--login", "--token", "invalid-token")
+	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
+		ExitCode: 1,
+		Err:      `invalid authentication token "invalid-token"`,
+	})
+}
