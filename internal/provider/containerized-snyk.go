@@ -30,6 +30,9 @@ import (
 	"github.com/mitchellh/go-homedir"
 )
 
+// ImageDigest is the sha snyk/snyk:alpine image, set at build time
+var ImageDigest = "unknown"
+
 type dockerSnykProvider struct {
 	Options
 }
@@ -51,7 +54,7 @@ func newDockerCmd(cmdDocker string, cmd string, flags dockerFlags, envs dockerEn
 	return dockerCmd{
 		cmdDocker: cmdDocker,
 		cmd:       cmd,
-		image:     "snyk/snyk:alpine",
+		image:     fmt.Sprintf("snyk/snyk@%s", ImageDigest),
 		flags:     flags,
 		envs:      envs,
 		args:      args,

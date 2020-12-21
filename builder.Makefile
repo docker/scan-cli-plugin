@@ -14,7 +14,8 @@ PKG_NAME=github.com/docker/scan-cli-plugin
 STATIC_FLAGS= CGO_ENABLED=0
 LDFLAGS := "-s -w \
   -X $(PKG_NAME)/internal.GitCommit=$(COMMIT) \
-  -X $(PKG_NAME)/internal.Version=$(TAG_NAME)"
+  -X $(PKG_NAME)/internal.Version=$(TAG_NAME) \
+  -X $(PKG_NAME)/internal/provider.ImageDigest=$(SNYK_IMAGE_DIGEST)"
 GO_BUILD = $(STATIC_FLAGS) go build -trimpath -ldflags=$(LDFLAGS)
 
 SNYK_DOWNLOAD_NAME:=snyk-linux
