@@ -27,8 +27,6 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/docker/scan-cli-plugin/internal/authentication"
-	"github.com/docker/scan-cli-plugin/internal/hub"
 	"github.com/google/uuid"
 	"github.com/mitchellh/go-homedir"
 )
@@ -78,7 +76,7 @@ func (s *snykProvider) Scan(image string) error {
 	cmd := s.newCommand(append(s.flags, image)...)
 	if authenticated, err := isAuthenticatedOnSnyk(); !authenticated || err != nil {
 		var err error
-		token, err := s.getToken()
+		token, err := getToken(s.Options)
 		if err != nil {
 			return fmt.Errorf("failed to get DockerScanID: %s", err)
 		}
@@ -88,20 +86,6 @@ func (s *snykProvider) Scan(image string) error {
 	cmd.Stdout = s.out
 	cmd.Stderr = s.err
 	return checkCommandErr(cmd.Run())
-}
-
-func (s *snykProvider) getToken() (string, error) {
-	if s.auth.Username == "" {
-		return "", fmt.Errorf(`You need to be logged in to Docker Hub to use scan feature.
-please login to Docker Hub using the Docker Login command`)
-	}
-	h := hub.GetInstance()
-	jwks, err := h.FetchJwks()
-	if err != nil {
-		return "", err
-	}
-	authenticator := authentication.NewAuthenticator(jwks, h.APIHubBaseURL)
-	return authenticator.GetToken(s.auth)
 }
 
 func (s *snykProvider) Version() (string, error) {

@@ -26,8 +26,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/docker/scan-cli-plugin/internal/authentication"
-	"github.com/docker/scan-cli-plugin/internal/hub"
 	"github.com/google/uuid"
 	"github.com/mitchellh/go-homedir"
 )
@@ -131,6 +129,7 @@ func (d *dockerSnykProvider) createContainer(token string, containerName string)
 	cmd := exec.CommandContext(d.context, "docker", cmdDocker.toShellCmd()...)
 	return cmd.Run()
 }
+
 func (d *dockerSnykProvider) copySnykConfigToContainer(containerName string, home string) error {
 	configFile := fmt.Sprintf("%s/.config/configstore/snyk.json", home)
 	if _, err := os.Stat(configFile); err == nil {
@@ -176,7 +175,7 @@ func (d *dockerSnykProvider) Scan(image string) error {
 	snykAuthToken, err := getSnykAuthenticationToken()
 	if snykAuthToken == "" || err != nil {
 		var err error
-		token, err = d.getDockerToken()
+		token, err = getToken(d.Options)
 		if err != nil {
 			return fmt.Errorf("failed to get DockerScanID: %s", err)
 		}
@@ -206,7 +205,6 @@ func (d *dockerSnykProvider) Version() (string, error) {
 		return "", fmt.Errorf(errMsg)
 	}
 	return fmt.Sprintf("Snyk (%s)", strings.TrimSpace(buff.String())), nil
-
 }
 
 func (d *dockerSnykProvider) newCommand(envVars []string, arg ...string) *exec.Cmd {
@@ -219,20 +217,6 @@ func (d *dockerSnykProvider) newCommand(envVars []string, arg ...string) *exec.C
 		envVars, arg...)
 	cmd := exec.CommandContext(d.context, "docker", cmdDocker.toShellCmd()...)
 	return cmd
-}
-
-func (d *dockerSnykProvider) getDockerToken() (string, error) {
-	if d.auth.Username == "" {
-		return "", fmt.Errorf(`You need to be logged in to Docker Hub to use scan feature.
-please login to Docker Hub using the Docker Login command`)
-	}
-	h := hub.GetInstance()
-	jwks, err := h.FetchJwks()
-	if err != nil {
-		return "", err
-	}
-	authenticator := authentication.NewAuthenticator(jwks, h.APIHubBaseURL)
-	return authenticator.GetToken(d.auth)
 }
 
 func getSnykAuthenticationToken() (string, error) {

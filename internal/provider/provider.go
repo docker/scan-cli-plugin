@@ -18,9 +18,12 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
+
+	"github.com/docker/scan-cli-plugin/internal/authentication"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/registry"
@@ -157,4 +160,18 @@ func WithPath(path string) Ops {
 		provider.path = path
 		return nil
 	}
+}
+
+func getToken(opts Options) (string, error) {
+	if opts.auth.Username == "" {
+		return "", fmt.Errorf(`You need to be logged in to Docker Hub to use scan feature.
+please login to Docker Hub using the Docker Login command`)
+	}
+	h := hub.GetInstance()
+	jwks, err := h.FetchJwks()
+	if err != nil {
+		return "", err
+	}
+	authenticator := authentication.NewAuthenticator(jwks, h.APIHubBaseURL)
+	return authenticator.GetToken(opts.auth)
 }
