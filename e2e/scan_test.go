@@ -97,12 +97,13 @@ func TestScanSucceedWithDockerHub(t *testing.T) {
 
 	cmd.Command = dockerCli.Command("scan", ImageWithVulnerabilities)
 	result := icmd.RunCmd(cmd)
-	if result.ExitCode == 1 {
-		assert.Assert(t, cmp.Regexp("found .* vulnerabilities", result.Combined()), result.Combined())
-	} else {
+	assert.Assert(t, result.ExitCode == 1)
+	if strings.HasPrefix(result.Combined(), "You") {
 		// We reach the monthly limits of 10 free scans
-		assert.Assert(t, result.ExitCode == 2)
 		assert.Assert(t, strings.Contains(result.Combined(), "You have reached the scan limit of 10 monthly scans without authentication."), result.Combined())
+	} else {
+		assert.Assert(t, cmp.Regexp("found .* vulnerabilities", result.Combined()), result.Combined())
+
 	}
 
 }
@@ -134,7 +135,7 @@ func TestScanWithSnyk(t *testing.T) {
 		{
 			name:     "invalid-docker-archive",
 			image:    InvalidImage,
-			exitCode: 2,
+			exitCode: 1,
 			contains: "Invalid Docker archive",
 		},
 		{
@@ -146,7 +147,7 @@ func TestScanWithSnyk(t *testing.T) {
 		{
 			name:     "invalid-image-name",
 			image:    "scratch",
-			exitCode: 2,
+			exitCode: 1,
 			contains: "manifest unknown",
 		},
 	}
@@ -186,7 +187,7 @@ func TestScanJsonOutput(t *testing.T) {
 		{
 			name:     "invalid-docker-archive",
 			image:    InvalidImage,
-			exitCode: 2,
+			exitCode: 1,
 			isEmpty:  true,
 		},
 		{
@@ -365,7 +366,7 @@ func TestScanWithContainerizedSnyk(t *testing.T) {
 		{
 			name:     "invalid-docker-archive",
 			image:    InvalidImage,
-			exitCode: 2,
+			exitCode: 1,
 			contains: "Invalid Docker archive",
 		},
 		{
@@ -377,7 +378,7 @@ func TestScanWithContainerizedSnyk(t *testing.T) {
 		{
 			name:     "invalid-image-name",
 			image:    "scratch",
-			exitCode: 2,
+			exitCode: 1,
 			contains: "manifest unknown",
 		},
 	}
