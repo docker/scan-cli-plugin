@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -80,6 +81,9 @@ func TestAuthenticationChecksToken(t *testing.T) {
 }
 
 func TestAuthWithContainerizedSnyk(t *testing.T) {
+	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
+		t.Skip("invalid test on Docker Desktop")
+	}
 	cmd, configDir, cleanup := dockerCli.createTestCommand(false)
 	defer cleanup()
 	createScanConfigFileOptinAndPath(t, configDir, true, "")
@@ -102,6 +106,9 @@ func TestAuthWithContainerizedSnyk(t *testing.T) {
 }
 
 func TestAuthWithContainerSnykFlagFailsWithImage(t *testing.T) {
+	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
+		t.Skip("invalid test on Docker Desktop")
+	}
 	cmd, configDir, cleanup := dockerCli.createTestCommand(false)
 	defer cleanup()
 	createScanConfigFileOptinAndPath(t, configDir, true, "")
@@ -117,6 +124,9 @@ func TestAuthWithContainerSnykFlagFailsWithImage(t *testing.T) {
 }
 
 func TestAuthWithContainerSnykChecksToken(t *testing.T) {
+	if runtime.GOOS == "darwin" || runtime.GOOS == "windows" {
+		t.Skip("invalid test on Docker Desktop")
+	}
 	cmd, configDir, cleanup := dockerCli.createTestCommand(false)
 	defer cleanup()
 	createScanConfigFileOptinAndPath(t, configDir, true, "")
