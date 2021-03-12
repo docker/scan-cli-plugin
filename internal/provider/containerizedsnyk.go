@@ -201,7 +201,12 @@ func (d *dockerSnykProvider) copySnykConfigToHost(containerID string, home strin
 	if err != nil {
 		return err
 	}
-	return archive.Untar(reader, fmt.Sprintf("%s/.config/configstore/", home), &archive.TarOptions{})
+	configstoreFolder := filepath.Join(home, ".config", "configstore")
+	err = os.MkdirAll(configstoreFolder, 0744)
+	if err != nil {
+		return err
+	}
+	return archive.Untar(reader, configstoreFolder, &archive.TarOptions{})
 }
 
 func (d *dockerSnykProvider) Scan(image string) error {
