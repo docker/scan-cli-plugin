@@ -30,6 +30,9 @@ import (
 )
 
 func TestSnykAuthentication(t *testing.T) {
+	if runtime.GOOS != "darwin" && runtime.GOOS != "windows" {
+		t.Skip("invalid test: only on Docker Desktop")
+	}
 	// Add snyk binary to the path
 	path := os.Getenv("PATH")
 	defer env.Patch(t, "PATH", fmt.Sprintf(pathFormat(), os.Getenv("SNYK_DESKTOP_PATH"), path))()
@@ -51,7 +54,7 @@ func TestSnykAuthentication(t *testing.T) {
 	// snyk config file should be updated
 	buff, err := ioutil.ReadFile(homeDir.Join(".config", "configstore", "snyk.json"))
 	assert.NilError(t, err)
-	assert.Assert(t, strings.Contains(string(buff), token))
+	assert.Assert(t, strings.Contains(string(buff), token), string(buff))
 }
 
 func TestAuthenticationFlagFailsWithImage(t *testing.T) {

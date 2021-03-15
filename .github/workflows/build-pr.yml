@@ -55,6 +55,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - name: Download binaries
+        run: make -f builder.Makefile download
+
+      - name: Build binary and run tests
+        run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile build e2e
+
       - name: Build Cross
         run: make cross
 
