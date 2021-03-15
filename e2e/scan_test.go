@@ -444,6 +444,9 @@ func createScanConfigFileOptin(t *testing.T, configDir string, optin bool) {
 }
 
 func createScanConfigFileOptinAndPath(t *testing.T, configDir string, optin bool, path string) {
+	if runtime.GOOS != "darwin" && runtime.GOOS != "windows" {
+		path = ""
+	}
 	conf := config.Config{
 		Path:  path,
 		Optin: optin,
