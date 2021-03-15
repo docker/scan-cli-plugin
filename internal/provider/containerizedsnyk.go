@@ -206,7 +206,9 @@ func (d *dockerSnykProvider) copySnykConfigToHost(containerID string, home strin
 	if err != nil {
 		return err
 	}
-	return archive.Untar(reader, configstoreFolder, &archive.TarOptions{})
+
+	// need NoLChown option to let tests pass when run as root, see https://github.com/habitat-sh/builder/issues/365#issuecomment-382862233
+	return archive.Untar(reader, configstoreFolder, &archive.TarOptions{NoLchown: true})
 }
 
 func (d *dockerSnykProvider) Scan(image string) error {
