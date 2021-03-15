@@ -206,7 +206,9 @@ func (d *dockerSnykProvider) copySnykConfigToHost(containerID string, home strin
 	if err != nil {
 		return err
 	}
-	return archive.Untar(reader, configstoreFolder, &archive.TarOptions{})
+
+	// need NoLChown option to let tests pass when run as root, see https://github.com/habitat-sh/builder/issues/365#issuecomment-382862233
+	return archive.Untar(reader, configstoreFolder, &archive.TarOptions{NoLchown: true})
 }
 
 func (d *dockerSnykProvider) Scan(image string) error {
@@ -269,6 +271,8 @@ func (d *dockerSnykProvider) newCommand(envVars []string, arg ...string) (string
 	defaultEnvs := []string{"NO_UPDATE_NOTIFIER=true", "SNYK_CFG_DISABLESUGGESTIONS=true",
 		"SNYK_INTEGRATION_NAME=DOCKER_DESKTOP"}
 	envVars = append(envVars, defaultEnvs...)
+
+	fmt.Printf("ENV VARS: %+v", envVars)
 
 	args := strslice.StrSlice{"snyk"}
 	args = append(args, arg...)

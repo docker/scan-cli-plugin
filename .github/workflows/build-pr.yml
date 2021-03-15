@@ -55,6 +55,20 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - name: Download binaries
+        run: make -f builder.Makefile download
+
+      - name: Check linux user
+        run: whoami
+
+      - name: Build binary and run tests
+        env:
+          E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
+          E2E_HUB_URL: ${{ secrets.E2E_HUB_URL }}
+          E2E_HUB_USERNAME: ${{ secrets.E2E_HUB_USERNAME }}
+          E2E_HUB_TOKEN: ${{ secrets.E2E_HUB_TOKEN }}
+        run: make TAG_NAME=${{ github.event.inputs.tag }} E2E_TEST_NAME=TestScanWithSnyk -f builder.Makefile build e2e
+
       - name: Build Cross
         run: make cross
 

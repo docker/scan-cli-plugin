@@ -103,7 +103,6 @@ func TestScanSucceedWithDockerHub(t *testing.T) {
 		assert.Assert(t, strings.Contains(result.Combined(), "You have reached the scan limit of 10 monthly scans without authentication."), result.Combined())
 	} else {
 		assert.Assert(t, cmp.Regexp("found .* vulnerabilities", result.Combined()), result.Combined())
-
 	}
 
 }
@@ -112,11 +111,22 @@ func TestScanWithSnyk(t *testing.T) {
 	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
 		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
 	}
-	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
+	tokenEnv := os.Getenv("E2E_TEST_AUTH_TOKEN")
+	fmt.Printf("ENV TOKEN (%d): %q\n", len(tokenEnv), tokenEnv)
+	homeDir, cleanFunction := createSnykConfFile(t, tokenEnv)
 	defer cleanFunction()
+
+	fmt.Printf("temp dir generate: %q", homeDir.Path())
+
+	snyconf := filepath.Join(homeDir.Path(), ".config", "configstore", "snyk.json")
+	content, err := ioutil.ReadFile(snyconf)
+	assert.NilError(t, err)
+	fmt.Printf("snyk config file content: %q\n", content)
 
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
 	defer cleanup()
+
+	cmd.Env = append(cmd.Env, fmt.Sprintf("HOME=%s", homeDir.Path()))
 
 	createScanConfigFile(t, configDir)
 
