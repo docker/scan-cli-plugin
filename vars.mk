@@ -1,5 +1,5 @@
 # Pinned Versions
-SNYK_DESKTOP_VERSION=1.437.2
+SNYK_DESKTOP_VERSION=1.461.0
 SNYK_USER_VERSION=1.425.0
 SNYK_OLD_VERSION=1.382.1
 # Digest of the 1.461.0 snyk/snyk:alpine image
