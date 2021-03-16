@@ -74,13 +74,15 @@ func (s *snykProvider) Authenticate(token string) error {
 func (s *snykProvider) Scan(image string) error {
 	// check snyk token
 	cmd := s.newCommand(append(s.flags, image)...)
-	if authenticated, err := isAuthenticatedOnSnyk(); !authenticated || err != nil {
+	if authenticated, err := isAuthenticatedOnSnyk(); authenticated == "" || err != nil {
 		var err error
 		token, err := getToken(s.Options)
 		if err != nil {
 			return fmt.Errorf("failed to get DockerScanID: %s", err)
 		}
 		cmd.Env = append(cmd.Env, fmt.Sprintf("SNYK_DOCKER_TOKEN=%s", token))
+	} else {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("SNYK_TOKEN=%s", authenticated))
 	}
 
 	cmd.Stdout = s.out
@@ -133,25 +135,25 @@ type snykConfig struct {
 	API string `json:"api,omitempty"`
 }
 
-func isAuthenticatedOnSnyk() (bool, error) {
+func isAuthenticatedOnSnyk() (string, error) {
 	home, err := homedir.Dir()
 	if err != nil {
-		return false, err
+		return "", err
 	}
 	snykConfFilePath := filepath.Join(home, ".config", "configstore", "snyk.json")
 	buff, err := ioutil.ReadFile(snykConfFilePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return false, nil
+			return "", nil
 		}
-		return false, err
+		return "", err
 	}
 	var config snykConfig
 	if err := json.Unmarshal(buff, &config); err != nil {
-		return false, err
+		return "", err
 	}
 
-	return config.API != "", nil
+	return config.API, nil
 }
 
 func checkUserSnykBinaryVersion(path string) bool {
