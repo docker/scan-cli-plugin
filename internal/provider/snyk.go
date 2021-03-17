@@ -18,10 +18,8 @@ package provider
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -29,10 +27,6 @@ import (
 	"strings"
 
 	"github.com/Masterminds/semver/v3"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/registry"
-	"github.com/docker/scan-cli-plugin/internal/authentication"
-	"github.com/docker/scan-cli-plugin/internal/hub"
 	"github.com/google/uuid"
 	"github.com/mitchellh/go-homedir"
 )
@@ -42,23 +36,16 @@ const (
 )
 
 type snykProvider struct {
-	path    string
-	flags   []string
-	auth    types.AuthConfig
-	context context.Context
-	out     io.Writer
-	err     io.Writer
+	Options
 }
 
 // NewSnykProvider returns a Snyk implementation of scan provider
-func NewSnykProvider(ops ...SnykProviderOps) (Provider, error) {
+func NewSnykProvider(defaultProvider Options, snykOps ...SnykProviderOps) (Provider, error) {
 	provider := snykProvider{
-		flags: []string{"container", "test"},
-		out:   os.Stdout,
-		err:   os.Stderr,
+		Options: defaultProvider,
 	}
-	for _, op := range ops {
-		if err := op(&provider); err != nil {
+	for _, snykOp := range snykOps {
+		if err := snykOp(&provider); err != nil {
 			return nil, err
 		}
 	}
@@ -67,90 +54,6 @@ func NewSnykProvider(ops ...SnykProviderOps) (Provider, error) {
 
 // SnykProviderOps function taking a pointer to a Snyk Provider and returning an error if needed
 type SnykProviderOps func(*snykProvider) error
-
-//WithContext update the Snyk provider with a cancelable context
-func WithContext(ctx context.Context) SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.context = ctx
-		return nil
-	}
-}
-
-//WithStreams sets the out and err streams to be used by commands
-func WithStreams(out, err io.Writer) SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.out = out
-		provider.err = err
-		return nil
-	}
-}
-
-// WithPath update the Snyk provider with the path from the configuration
-func WithPath(path string) SnykProviderOps {
-	return func(provider *snykProvider) error {
-		if p, err := exec.LookPath("snyk"); err == nil && checkUserSnykBinaryVersion(p) {
-			path = p
-		}
-		provider.path = path
-		return nil
-	}
-}
-
-// WithAuthConfig update the Snyk provider with the auth configuration from Docker CLI
-func WithAuthConfig(authResolver func(*registry.IndexInfo) types.AuthConfig) SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.auth = authResolver(hub.GetInstance().RegistryInfo)
-		return nil
-	}
-}
-
-// WithJSON set JSONFormat to display scan result in JSON
-func WithJSON() SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.flags = append(provider.flags, "--json")
-		return nil
-	}
-}
-
-// WithoutBaseImageVulnerabilities don't display the vulnerabilities from the base image
-func WithoutBaseImageVulnerabilities() SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.flags = append(provider.flags, "--exclude-base-image-vulns")
-		return nil
-	}
-}
-
-// WithDockerFile improve result by providing a Dockerfile
-func WithDockerFile(path string) SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.flags = append(provider.flags, "--file="+path)
-		return nil
-	}
-}
-
-// WithDependencyTree shows the dependency tree before scan results
-func WithDependencyTree() SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.flags = append(provider.flags, "--print-deps")
-		return nil
-	}
-}
-
-// WithSeverity only reports vulnerabilities of the provided level or higher
-func WithSeverity(severity string) SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.flags = append(provider.flags, "--severity-threshold="+severity)
-		return nil
-	}
-}
-
-// WithGroupIssues groups same issues in a single one when using --json flag
-func WithGroupIssues() SnykProviderOps {
-	return func(provider *snykProvider) error {
-		provider.flags = append(provider.flags, "--group-issues")
-		return nil
-	}
-}
 
 func (s *snykProvider) Authenticate(token string) error {
 	if token != "" {
@@ -171,32 +74,20 @@ func (s *snykProvider) Authenticate(token string) error {
 func (s *snykProvider) Scan(image string) error {
 	// check snyk token
 	cmd := s.newCommand(append(s.flags, image)...)
-	if authenticated, err := isAuthenticatedOnSnyk(); !authenticated || err != nil {
+	if authenticated, err := isAuthenticatedOnSnyk(); authenticated == "" || err != nil {
 		var err error
-		token, err := s.getToken()
+		token, err := getToken(s.Options)
 		if err != nil {
 			return fmt.Errorf("failed to get DockerScanID: %s", err)
 		}
 		cmd.Env = append(cmd.Env, fmt.Sprintf("SNYK_DOCKER_TOKEN=%s", token))
+	} else {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("SNYK_TOKEN=%s", authenticated))
 	}
 
 	cmd.Stdout = s.out
 	cmd.Stderr = s.err
 	return checkCommandErr(cmd.Run())
-}
-
-func (s *snykProvider) getToken() (string, error) {
-	if s.auth.Username == "" {
-		return "", fmt.Errorf(`You need to be logged in to Docker Hub to use scan feature.
-please login to Docker Hub using the Docker Login command`)
-	}
-	h := hub.GetInstance()
-	jwks, err := h.FetchJwks()
-	if err != nil {
-		return "", err
-	}
-	authenticator := authentication.NewAuthenticator(jwks, h.APIHubBaseURL)
-	return authenticator.GetToken(s.auth)
 }
 
 func (s *snykProvider) Version() (string, error) {
@@ -244,25 +135,25 @@ type snykConfig struct {
 	API string `json:"api,omitempty"`
 }
 
-func isAuthenticatedOnSnyk() (bool, error) {
+func isAuthenticatedOnSnyk() (string, error) {
 	home, err := homedir.Dir()
 	if err != nil {
-		return false, err
+		return "", err
 	}
 	snykConfFilePath := filepath.Join(home, ".config", "configstore", "snyk.json")
 	buff, err := ioutil.ReadFile(snykConfFilePath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return false, nil
+			return "", nil
 		}
-		return false, err
+		return "", err
 	}
 	var config snykConfig
 	if err := json.Unmarshal(buff, &config); err != nil {
-		return false, err
+		return "", err
 	}
 
-	return config.API != "", nil
+	return config.API, nil
 }
 
 func checkUserSnykBinaryVersion(path string) bool {

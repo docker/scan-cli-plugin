@@ -93,10 +93,12 @@ func setupMockSnykBinary(t *testing.T) (Provider, *bytes.Buffer) {
 	outStream := bytes.NewBuffer(nil)
 	errStream := bytes.NewBuffer(nil)
 
-	provider, err := NewSnykProvider(
+	defaultProvider, err := NewProvider(WithContext(context.Background()),
 		WithPath(snykPath),
-		WithContext(context.Background()),
 		WithStreams(outStream, errStream))
+	assert.NilError(t, err)
+	provider, err := NewSnykProvider(
+		defaultProvider)
 	assert.NilError(t, err)
 	return provider, outStream
 }

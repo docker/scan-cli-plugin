@@ -19,6 +19,7 @@ package e2e
 import (
 	"fmt"
 	"os"
+	"runtime"
 	"testing"
 
 	"gotest.tools/v3/assert"
@@ -99,11 +100,23 @@ func TestVersionWithoutSnykOrConfig(t *testing.T) {
 
 	// docker scan --version should fail with a clean error
 	cmd.Command = dockerCli.Command("scan", "--accept-license", "--version")
-	output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{
-		ExitCode: 1,
-	}).Combined()
-	expected := "failed to read docker scan configuration file. Please restart Docker Desktop"
-	assert.Assert(t, is.Contains(output, expected))
+	res := icmd.RunCmd(cmd)
+	if runtime.GOOS != "darwin" && runtime.GOOS != "windows" { // config file created by default without Docker Desktop
+		expected := fmt.Sprintf(`Version:    %s
+Git commit: %s
+Provider:   %s
+`, internal.Version, internal.GitCommit, "Snyk (1.461.0 (standalone))")
+		res.Assert(t, icmd.Expected{
+			ExitCode: 0,
+			Out:      expected,
+		})
+	} else {
+		output := res.Assert(t, icmd.Expected{
+			ExitCode: 1,
+		}).Combined()
+		expected := "failed to read docker scan configuration file. Please restart Docker Desktop"
+		assert.Assert(t, is.Contains(output, expected))
+	}
 }
 
 func getProviderVersion(env string) string {

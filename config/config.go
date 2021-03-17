@@ -21,6 +21,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/pkg/errors"
 
@@ -38,6 +39,15 @@ type Config struct {
 func ReadConfigFile() (Config, error) {
 	var conf Config
 	path := filepath.Join(cliConfig.Dir(), "scan", "config.json")
+	if runtime.GOOS != "windows" && runtime.GOOS != "darwin" {
+		_, err := os.Stat(path)
+		if err != nil && os.IsNotExist(err) {
+			err := SaveConfigFile(Config{})
+			if err != nil {
+				return conf, errors.Wrapf(err, "failed to create initial scan configuration file %q", path)
+			}
+		}
+	}
 	buf, err := ioutil.ReadFile(path)
 	if err != nil {
 		_ = os.Remove(path)

@@ -22,6 +22,7 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"runtime"
 	"syscall"
 
 	"github.com/docker/cli/cli-plugins/manager"
@@ -105,13 +106,13 @@ func newScanCmd(ctx context.Context, dockerCli command.Cli) *cobra.Command {
 	return cmd
 }
 
-func configureProvider(ctx context.Context, dockerCli command.Streams, flags options, options ...provider.SnykProviderOps) (provider.Provider, error) {
+func configureProvider(ctx context.Context, dockerCli command.Cli, flags options, options ...provider.Ops) (provider.Provider, error) {
 	conf, err := checkConsent(flags, dockerCli)
 	if err != nil {
 		return nil, err
 	}
 
-	opts := []provider.SnykProviderOps{
+	opts := []provider.Ops{
 		provider.WithContext(ctx),
 		provider.WithPath(conf.Path),
 	}
@@ -141,7 +142,14 @@ func configureProvider(ctx context.Context, dockerCli command.Streams, flags opt
 		}
 		opts = append(opts, provider.WithSeverity(flags.severity))
 	}
-	return provider.NewSnykProvider(opts...)
+	defaultProvider, err := provider.NewProvider(opts...)
+	if err != nil {
+		return nil, err
+	}
+	if runtime.GOOS == "linux" && !provider.UseExternalBinary(defaultProvider) {
+		return provider.NewDockerSnykProvider(dockerCli, defaultProvider)
+	}
+	return provider.NewSnykProvider(defaultProvider)
 }
 
 func checkConsent(flags options, dockerCli command.Streams) (config.Config, error) {
@@ -172,7 +180,7 @@ func checkConsent(flags options, dockerCli command.Streams) (config.Config, erro
 	return conf, nil
 }
 
-func runVersion(ctx context.Context, dockerCli command.Streams, flags options) error {
+func runVersion(ctx context.Context, dockerCli command.Cli, flags options) error {
 	scanProvider, err := configureProvider(ctx, dockerCli, flags)
 	if err != nil {
 		return err
@@ -186,7 +194,7 @@ func runVersion(ctx context.Context, dockerCli command.Streams, flags options) e
 	return nil
 }
 
-func runAuthentication(ctx context.Context, dockerCli command.Streams, flags options, args []string) error {
+func runAuthentication(ctx context.Context, dockerCli command.Cli, flags options, args []string) error {
 	if len(args) != 0 {
 		return fmt.Errorf(`--login flag expects no argument`)
 	}
@@ -211,8 +219,8 @@ func runScan(ctx context.Context, cmd *cobra.Command, dockerCli command.Cli, fla
 		return err
 	}
 	err = scanProvider.Scan(args[0])
-	if exitError, ok := err.(*exec.ExitError); ok {
-		os.Exit(exitError.ExitCode())
+	if _, ok := err.(*exec.ExitError); ok {
+		os.Exit(1)
 	}
 	return err
 }

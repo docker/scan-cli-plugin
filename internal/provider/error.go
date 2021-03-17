@@ -44,3 +44,10 @@ func IsInvalidTokenError(err error) bool {
 	_, ok := err.(*invalidTokenError)
 	return ok
 }
+
+type containerizedError struct {
+}
+
+func (c containerizedError) Error() string {
+	return ""
+}
