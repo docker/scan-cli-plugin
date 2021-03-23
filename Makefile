@@ -84,6 +84,10 @@ validate-go-mod: ## Validate go.mod and go.sum are up-to-date
 .PHONY: validate
 validate: validate-go-mod validate-headers ## Validate sources
 
+.PHONY: native-build
+native-build:
+	GO111MODULE=on make -f builder.Makefile build
+
 .PHONY: help
 help: ## Show help
 	@echo Please specify a build target. The choices are:
