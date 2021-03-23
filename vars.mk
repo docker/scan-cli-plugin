@@ -15,5 +15,5 @@ BINARY_EXT=
 ifeq ($(GOOS),windows)
 	BINARY_EXT=.exe
 endif
-PLATFORM_BINARY:=docker-scan_$(GOOS)_amd64$(BINARY_EXT)
+PLATFORM_BINARY?=docker-scan_$(GOOS)_amd64$(BINARY_EXT)
 BINARY=docker-scan$(BINARY_EXT)
