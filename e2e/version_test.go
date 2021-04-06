@@ -83,7 +83,7 @@ func TestVersionSnykDesktopBinary(t *testing.T) {
 	createScanConfigFile(t, configDir)
 
 	// docker scan --version should print docker scan plugin version and snyk version
-	cmd.Command = dockerCli.Command("scan", "--accept-license", "--version")
+	cmd.Command = dockerCli.Command("scan", "--version")
 	output := icmd.RunCmd(cmd).Assert(t, icmd.Success).Combined()
 	expected := fmt.Sprintf(
 		`Version:    %s
@@ -99,7 +99,7 @@ func TestVersionWithoutSnykOrConfig(t *testing.T) {
 	defer cleanup()
 
 	// docker scan --version should fail with a clean error
-	cmd.Command = dockerCli.Command("scan", "--accept-license", "--version")
+	cmd.Command = dockerCli.Command("scan", "--version")
 	res := icmd.RunCmd(cmd)
 	if runtime.GOOS != "darwin" && runtime.GOOS != "windows" { // config file created by default without Docker Desktop
 		expected := fmt.Sprintf(`Version:    %s

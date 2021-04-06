@@ -157,6 +157,9 @@ func checkConsent(flags options, dockerCli command.Streams) (config.Config, erro
 	if err != nil {
 		return config.Config{}, err
 	}
+	if flags.showVersion {
+		return conf, nil
+	}
 
 	if !conf.Optin || flags.forceOptIn || flags.forceOptOut {
 		switch {

@@ -42,7 +42,7 @@ func TestFirstScanOptinMessage(t *testing.T) {
 	// docker scan should ask for consent the first time the user runs it
 	in, out, err := os.Pipe()
 	assert.NilError(t, err)
-	cmd.Command = dockerCli.Command("scan", "--version")
+	cmd.Command = dockerCli.Command("scan", "myimage")
 	cmd.Stdin = in
 
 	go func() {
@@ -51,8 +51,7 @@ func TestFirstScanOptinMessage(t *testing.T) {
 	}()
 
 	result := icmd.RunCmd(cmd)
-	assert.Assert(t, strings.Contains(result.Combined(), `Docker Scan relies upon access to Snyk, a third party provider, do you consent to proceed using Snyk? (y/N)
-Version:`))
+	assert.Assert(t, strings.Contains(result.Combined(), `Docker Scan relies upon access to Snyk, a third party provider, do you consent to proceed using Snyk? (y/N)`))
 
 	// check the consent has been stored in config file
 	data, err := ioutil.ReadFile(filepath.Join(configDir, "scan", "config.json"))
@@ -67,8 +66,8 @@ func TestRefuseOptinWithDisableFlag(t *testing.T) {
 	defer cleanup()
 	createScanConfigFile(t, configDir)
 
-	// docker scan --version should exit immediately
-	cmd.Command = dockerCli.Command("scan", "--reject-license", "--version")
+	// docker scan myimage should exit immediately
+	cmd.Command = dockerCli.Command("scan", "--reject-license", "myimage")
 	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
 		ExitCode: 0,
 		Out:      "",
