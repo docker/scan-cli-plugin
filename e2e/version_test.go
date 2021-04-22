@@ -105,7 +105,7 @@ func TestVersionWithoutSnykOrConfig(t *testing.T) {
 		expected := fmt.Sprintf(`Version:    %s
 Git commit: %s
 Provider:   %s
-`, internal.Version, internal.GitCommit, "Snyk (1.461.0 (standalone))")
+`, internal.Version, internal.GitCommit, getProviderVersion("SNYK_DESKTOP_VERSION"))
 		res.Assert(t, icmd.Expected{
 			ExitCode: 0,
 			Out:      expected,
