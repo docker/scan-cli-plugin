@@ -396,7 +396,7 @@ func TestScanWithContainerizedSnyk(t *testing.T) {
 }
 
 func TestScanLocalImageWithContainerizedSnyk(t *testing.T) {
-	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+	if runtime.GOOS != "linux" {
 		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
 	}
 	homeDir, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
