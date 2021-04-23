@@ -41,6 +41,7 @@ const (
 	ImageWithoutVulnerabilities   = "hello-world"
 	InvalidImage                  = "dockerscanci/scratch:1.0"          // FROM scratch
 	ImageBaseImageVulnerabilities = "dockerscanci/base-image-vulns:1.0" // FROM alpine:3.10.0
+	LocalBuildImage               = "local:build"
 )
 
 func TestScanFailsNoAuthentication(t *testing.T) {
@@ -369,7 +370,7 @@ func TestScanWithContainerizedSnyk(t *testing.T) {
 			name:     "invalid-docker-archive",
 			image:    InvalidImage,
 			exitCode: 1,
-			contains: "Invalid Docker archive",
+			contains: "(HTTP code 500) server error - empty export - not implemented",
 		},
 		{
 			name:     "image-with-vulnerabilities",
@@ -392,6 +393,27 @@ func TestScanWithContainerizedSnyk(t *testing.T) {
 			assert.Assert(t, strings.Contains(output, testCase.contains), output)
 		})
 	}
+}
+
+func TestScanLocalImageWithContainerizedSnyk(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
+	}
+	homeDir, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
+	defer cleanFunction()
+
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
+	defer cleanup()
+	createScanConfigFileOptinAndPath(t, configDir, true, "")
+
+	// Build a local image
+	cmd.Command = dockerCli.Command("build", "-f", "./testdata/Dockerfile", "-t", LocalBuildImage, ".")
+	cmd.Env = append(cmd.Env, fmt.Sprintf("HOME=%s", homeDir.Path()))
+	icmd.RunCmd(cmd).Assert(t, icmd.Success)
+
+	cmd.Command = dockerCli.Command("scan", LocalBuildImage)
+	output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{ExitCode: 1}).Combined()
+	assert.Assert(t, strings.Contains(output, "vulnerability found"))
 }
 
 func createSnykConfDirectories(t *testing.T, withConfFile bool, token string) (*fs.Dir, func()) {
