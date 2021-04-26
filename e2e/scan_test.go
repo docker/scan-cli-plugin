@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -110,7 +111,7 @@ func TestScanSucceedWithDockerHub(t *testing.T) {
 }
 
 func TestScanWithSnyk(t *testing.T) {
-	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+	if runtime.GOOS != "linux" {
 		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
 	}
 	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
@@ -164,7 +165,7 @@ func TestScanWithSnyk(t *testing.T) {
 }
 
 func TestScanJsonOutput(t *testing.T) {
-	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+	if runtime.GOOS != "linux" {
 		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
 	}
 	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
@@ -216,7 +217,7 @@ type JSONOutput struct {
 }
 
 func TestScanWithFileAndExcludeBaseImageVulns(t *testing.T) {
-	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+	if runtime.GOOS != "linux" {
 		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
 	}
 	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
@@ -233,7 +234,7 @@ func TestScanWithFileAndExcludeBaseImageVulns(t *testing.T) {
 }
 
 func TestScanWithExcludeBaseImageVulns(t *testing.T) {
-	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+	if runtime.GOOS != "linux" {
 		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
 	}
 	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
@@ -251,7 +252,7 @@ func TestScanWithExcludeBaseImageVulns(t *testing.T) {
 }
 
 func TestScanWithDependencies(t *testing.T) {
-	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+	if runtime.GOOS != "linux" {
 		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
 	}
 	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
@@ -269,7 +270,7 @@ func TestScanWithDependencies(t *testing.T) {
 }
 
 func TestScanWithSeverity(t *testing.T) {
-	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+	if runtime.GOOS != "linux" {
 		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
 	}
 	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
@@ -288,7 +289,7 @@ func TestScanWithSeverity(t *testing.T) {
 }
 
 func TestScanWithSeverityBadValue(t *testing.T) {
-	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+	if runtime.GOOS != "linux" {
 		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
 	}
 	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
@@ -306,7 +307,7 @@ func TestScanWithSeverityBadValue(t *testing.T) {
 }
 
 func TestScanWithJsonAndGroupIssues(t *testing.T) {
-	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+	if runtime.GOOS != "linux" {
 		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
 	}
 	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
@@ -326,7 +327,7 @@ func TestScanWithJsonAndGroupIssues(t *testing.T) {
 }
 
 func TestScanWithGroupIssues(t *testing.T) {
-	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+	if runtime.GOOS != "linux" {
 		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
 	}
 	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
@@ -344,7 +345,7 @@ func TestScanWithGroupIssues(t *testing.T) {
 }
 
 func TestScanWithContainerizedSnyk(t *testing.T) {
-	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+	if runtime.GOOS != "linux" {
 		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
 	}
 	homeDir, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
@@ -399,7 +400,7 @@ func TestScanLocalImageWithContainerizedSnyk(t *testing.T) {
 	if runtime.GOOS != "linux" {
 		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
 	}
-	homeDir, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
+	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
 	defer cleanFunction()
 
 	cmd, configDir, cleanup := dockerCli.createTestCmd()
@@ -408,12 +409,29 @@ func TestScanLocalImageWithContainerizedSnyk(t *testing.T) {
 
 	// Build a local image
 	cmd.Command = dockerCli.Command("build", "-f", "./testdata/Dockerfile", "-t", LocalBuildImage, ".")
-	cmd.Env = append(cmd.Env, fmt.Sprintf("HOME=%s", homeDir.Path()))
 	icmd.RunCmd(cmd).Assert(t, icmd.Success)
 
 	cmd.Command = dockerCli.Command("scan", LocalBuildImage)
 	output := icmd.RunCmd(cmd).Assert(t, icmd.Expected{ExitCode: 1}).Combined()
 	assert.Assert(t, strings.Contains(output, "vulnerability found"))
+}
+
+func TestScanWithFileAndExcludeBaseImageVulnsContainerizedProvider(t *testing.T) {
+	if runtime.GOOS != "linux" {
+		t.Skip("Can't run on this ci platform (windows containers or no engine installed)")
+	}
+	pwd, _ := os.Getwd()
+	dockerfilePath := path.Join(pwd, "/testdata/Dockerfile")
+	_, cleanFunction := createSnykConfFile(t, os.Getenv("E2E_TEST_AUTH_TOKEN"))
+	defer cleanFunction()
+
+	cmd, configDir, cleanup := dockerCli.createTestCmd()
+	defer cleanup()
+	createScanConfigFileOptinAndPath(t, configDir, true, "")
+
+	cmd.Command = dockerCli.Command("scan", "--file", dockerfilePath, "--exclude-base", ImageBaseImageVulnerabilities)
+	output := icmd.RunCmd(cmd).Assert(t, icmd.Success).Combined()
+	assert.Assert(t, strings.Contains(output, "found 0 issues."))
 }
 
 func createSnykConfDirectories(t *testing.T, withConfFile bool, token string) (*fs.Dir, func()) {

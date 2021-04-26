@@ -268,6 +268,18 @@ func (d *dockerSnykProvider) newCommand(envVars []string, arg ...string) (string
 	bindings := dockerBindings{
 		"/var/run/docker.sock:/var/run/docker.sock",
 	}
+	for index, argument := range arg {
+		if strings.HasPrefix(argument, "--file") {
+			argSplit := strings.Split(argument, "=")
+			filePath, err := filepath.Abs(argSplit[1])
+			if err != nil {
+				return "", nil, err
+			}
+
+			bindings = append(bindings, fmt.Sprintf(`%s:/app/Dockerfile`, filePath))
+			arg[index] = "--file=/app/Dockerfile"
+		}
+	}
 	defaultEnvs := []string{"NO_UPDATE_NOTIFIER=true", "SNYK_CFG_DISABLESUGGESTIONS=true",
 		"SNYK_INTEGRATION_NAME=DOCKER_DESKTOP"}
 	envVars = append(envVars, defaultEnvs...)
