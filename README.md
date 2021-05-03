@@ -20,32 +20,32 @@ Docker Scan is a Command Line Interface to run vulnerability detection on your D
 
 ### Login and Third Party Providers
 
-You need to be logged into the Docker Hub in order to use the `docker scan` command.  
-Docker Scan works with third party providers to detect vulnerabilities, 
+You need to be logged into the Docker Hub in order to use the `docker scan` command.
+Docker Scan works with third party providers to detect vulnerabilities,
 the plugin will ask for your consent before sending any data to the provider.
 ```console
 $ docker scan hello-world
 ? Docker Scan relies upon access to Snyk a third party provider, do you consent to proceed using Snyk? (y/N)
-``` 
+```
 
 ### Scanning
 
-Docker Scan allows you to scan existing Docker images by name or ID. 
+Docker Scan allows you to scan existing Docker images by name or ID.
 
-* You can then use `docker scan DOCKER_IMAGE`: 
+* You can then use `docker scan DOCKER_IMAGE`:
 ```console
 $  docker scan hello-world
-  
+
   Testing hello-world...
-  
+
   Organization:      docker-desktop-test
   Package manager:   linux
   Project name:      docker-image|hello-world
   Docker image:      hello-world
   Licenses:          enabled
-  
+
   ✓ Tested 0 dependencies for known issues, no vulnerable paths found.
-  
+
   Note that we do not currently have vulnerability data for your image.
 ```
 
@@ -270,13 +270,13 @@ Docker image:      99138c65ebc7
 Licenses:          enabled
 
 Tested 200 dependencies for known issues, found 157 issues.
-``` 
+```
 If you want to only display some level of vulnerabilities, the `--severity` flag allows you to choose between 3 levels of
 vulnerabilities `low`,`medium` or `high`. By using this tag you will only report vulnerabilities of the provided level
  or higher.
- 
+
  ```console
-$ docker scan --severity=medium docker-scan:e2e 
+$ docker scan --severity=medium docker-scan:e2e
 ./bin/docker-scan_darwin_amd64 scan --severity=medium docker-scan:e2e
 
 Testing docker-scan:e2e...
@@ -309,20 +309,20 @@ Platform:          linux/amd64
 Licenses:          enabled
 
 Tested 200 dependencies for known issues, found 37 issues.
-```  
+```
 
 ### Provider Authentication
 
-If you have an existing Snyk account, you can directly use your auth token  
+If you have an existing Snyk account, you can directly use your auth token
 ```console
 $ docker scan --login --token PROVIDER_AUTH_TOKEN
-``` 
+```
 
 You need to get a Snyk [API token](https://app.snyk.io/account) and then use it like this
 ```console
 $ docker scan --login --token c68dc480-27bd-45ee-9f5c-XXXXXXXXXXXX
 
-Your account has been authenticated. Snyk is now ready to be used. 
+Your account has been authenticated. Snyk is now ready to be used.
 ```
 
 If you use the `--login` command without any token, you will be redirected to the Snyk website to login.
@@ -330,8 +330,10 @@ If you use the `--login` command without any token, you will be redirected to th
 ## Install Docker Scan
 
 ### On macOS & Windows:
+
 Docker Desktop comes with Docker scan already installed.
 Just try to use the plugin, open a terminal and write the following command:
+
 ```console
 $ docker scan
 Usage:    docker scan [OPTIONS] IMAGE
@@ -354,12 +356,27 @@ If you get the following error message, you're not using the latest version of D
 `docker: 'scan' is not a docker command.`
 
 ### On Linux
+
+Docker packaging on Linux comes with Docker scan plugin.
+You can simply install Docker following the [standard linux install](https://docs.docker.com/engine/install/#server)
+
+Just try to use the plugin, open a terminal and type the following command:
+
+```console
+$ docker scan
+Usage:    docker scan [OPTIONS] IMAGE
+```
+
+If you get the following error message, you're not using the latest version of Docker on Linux
+`docker: 'scan' is not a docker command.`
+
+Alternatively, you can manually install the scan docker plugin on top of your existing docker setup :
 Download the binary from the latest release and copy it in the `cli-plugins` directory
 ```sh
 mkdir -p ~/.docker/cli-plugins && \
 curl https://github.com/docker/scan-cli-plugin/releases/download/latest/docker-scan_linux_amd64 -L -s -S -o ~/.docker/cli-plugins/docker-scan &&\
 chmod +x ~/.docker/cli-plugins/docker-scan
-``` 
+```
 
 ## How to build docker scan
 
@@ -367,6 +384,6 @@ You'll find all the commands to build, run and test Docker Scan inside the [`BUI
 
 ## Contributing
 
-Want to contribute to Docker Scan? Awesome!  
-First be sure to read the [Code of conduct](./CODE_OF_CONDUCT.md).   
+Want to contribute to Docker Scan? Awesome!
+First be sure to read the [Code of conduct](./CODE_OF_CONDUCT.md).
 You can find information about contributing to this project in the [`CONTRIBUTING.md`](./CONTRIBUTING.md)
