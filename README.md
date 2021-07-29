@@ -374,7 +374,7 @@ Alternatively, you can manually install the scan docker plugin on top of your ex
 Download the binary from the latest release and copy it in the `cli-plugins` directory
 ```sh
 mkdir -p ~/.docker/cli-plugins && \
-curl https://github.com/docker/scan-cli-plugin/releases/download/latest/docker-scan_linux_amd64 -L -s -S -o ~/.docker/cli-plugins/docker-scan &&\
+curl https://github.com/docker/scan-cli-plugin/releases/latest/download/docker-scan_linux_amd64 -L -s -S -o ~/.docker/cli-plugins/docker-scan &&\
 chmod +x ~/.docker/cli-plugins/docker-scan
 ```
 
