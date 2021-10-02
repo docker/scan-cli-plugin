@@ -360,6 +360,10 @@ If you get the following error message, you're not using the latest version of D
 Docker packaging on Linux comes with Docker scan plugin.
 You can simply install Docker following the [standard linux install](https://docs.docker.com/engine/install/#server)
 
+For DEB-based distros, the plugin is installed as an optional dependency, but currently it's only available for amd64 platforms.
+
+For RPM-based distros (CentOS, Fedora), the plugin is always installed (as RPM's don't have a concept of "optional" dependencies).
+
 Just try to use the plugin, open a terminal and type the following command:
 
 ```console
