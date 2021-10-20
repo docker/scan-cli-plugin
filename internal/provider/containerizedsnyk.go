@@ -25,6 +25,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+
 	"github.com/docker/docker/pkg/jsonmessage"
 
 	"github.com/docker/cli/cli/command"
@@ -153,7 +155,7 @@ func (d *dockerSnykProvider) createContainer(token string, containerName string)
 
 	config, hostConfig := containerConfigs(envVars, bindings, strslice.StrSlice{"snyk", "auth", token})
 
-	result, err := d.cli.Client().ContainerCreate(d.context, &config, &hostConfig, nil, containerName)
+	result, err := d.cli.Client().ContainerCreate(d.context, &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, containerName)
 	if err != nil {
 		return "", nil, fmt.Errorf("cannot create container: %s", err)
 	}
@@ -288,7 +290,7 @@ func (d *dockerSnykProvider) newCommand(envVars []string, arg ...string) (string
 	args = append(args, arg...)
 	config, hostConfig := containerConfigs(envVars, bindings, args)
 
-	result, err := d.cli.Client().ContainerCreate(d.context, &config, &hostConfig, nil, "")
+	result, err := d.cli.Client().ContainerCreate(d.context, &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, "")
 	if err != nil {
 		return "", nil, fmt.Errorf("cannot create container: %s", err)
 	}
