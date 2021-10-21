@@ -290,7 +290,7 @@ func (d *dockerSnykProvider) newCommand(envVars []string, arg ...string) (string
 	args = append(args, arg...)
 	config, hostConfig := containerConfigs(envVars, bindings, args)
 
-	result, err := d.cli.Client().ContainerCreate(d.context, &config, &hostConfig, nil, &v1.Platform{Architecture: "amd64", OS: "linux"}, "")
+	result, err := d.cli.Client().ContainerCreate(d.context, &config, &hostConfig, nil, nil, "")
 	if err != nil {
 		return "", nil, fmt.Errorf("cannot create container: %s", err)
 	}
