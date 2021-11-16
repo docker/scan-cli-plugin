@@ -69,11 +69,11 @@ func (a *Authenticator) GetToken(hubAuthConfig types.AuthConfig) (string, error)
 	var err error
 	token, err = a.negotiateScanIDToken(hubAuthConfig)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("could not negotiate scan id token: %w", err)
 	}
 	// Persist token on local storage
-	if err := a.updateLocalToken(hubAuthConfig, token); err != nil {
-		return "", err
+	if err = a.updateLocalToken(hubAuthConfig, token); err != nil {
+		return "", fmt.Errorf("could not update local token: %w", err)
 	}
 	return token, nil
 }
@@ -135,9 +135,13 @@ func (a *Authenticator) findKey(token *jwt.JSONWebToken) (crypto.PublicKey, erro
 func (a *Authenticator) negotiateScanIDToken(hubAuthConfig types.AuthConfig) (string, error) {
 	hubToken, err := a.hub.Login(hubAuthConfig)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("could not login: %w", err)
 	}
-	return a.hub.GetScanID(hubToken)
+	token, err := a.hub.GetScanID(hubToken)
+	if err != nil {
+		return "", fmt.Errorf("could not get scan id: %w", err)
+	}
+	return token, nil
 }
 
 func (a *Authenticator) updateLocalToken(hubAuthConfig types.AuthConfig, token string) error {

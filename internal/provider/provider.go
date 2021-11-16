@@ -170,8 +170,12 @@ please login to Docker Hub using the Docker Login command`)
 	h := hub.GetInstance()
 	jwks, err := h.FetchJwks()
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("could not fetch jwks: %w", err)
 	}
 	authenticator := authentication.NewAuthenticator(jwks, h.APIHubBaseURL)
-	return authenticator.GetToken(opts.auth)
+	token, err := authenticator.GetToken(opts.auth)
+	if err != nil {
+		return "", fmt.Errorf("could not get token: %w", err)
+	}
+	return token, nil
 }

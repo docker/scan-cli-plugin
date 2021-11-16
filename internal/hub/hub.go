@@ -44,6 +44,7 @@ func (h *Client) Login(hubAuthConfig types.AuthConfig) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	return "", fmt.Errorf("body: %v, u: %v, p: %v", string(data), hubAuthConfig.Username != "", hubAuthConfig.Password != "")
 	body := bytes.NewBuffer(data)
 
 	// Login on the Docker Hub
@@ -89,12 +90,12 @@ func doRequest(req *http.Request) ([]byte, error) {
 	if resp.Body != nil {
 		defer resp.Body.Close() //nolint:errcheck
 	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("bad status code %q", resp.Status)
-	}
 	buf, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("bad status code %q, body: %v", resp.Status, string(buf))
 	}
 	return buf, nil
 }
