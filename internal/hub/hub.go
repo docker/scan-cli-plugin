@@ -47,7 +47,7 @@ func (h *Client) Login(hubAuthConfig types.AuthConfig) (string, error) {
 	body := bytes.NewBuffer(data)
 
 	// Login on the Docker Hub
-	req, err := http.NewRequest("POST", h.Domain+LoginURL, ioutil.NopCloser(body))
+	req, err := http.NewRequest("POST", h.Domain+LoginURL, body)
 	if err != nil {
 		return "", err
 	}
