@@ -50,7 +50,7 @@ type Options struct {
 // NewProvider returns default provider options setup with the give options
 func NewProvider(options ...Ops) (Options, error) {
 	provider := Options{
-		flags: []string{"container", "test", "--app-vulns"},
+		flags: []string{"container", "test"},
 		out:   os.Stdout,
 		err:   os.Stderr,
 	}
@@ -147,6 +147,14 @@ func WithSeverity(severity string) Ops {
 func WithGroupIssues() Ops {
 	return func(provider *Options) error {
 		provider.flags = append(provider.flags, "--group-issues")
+		return nil
+	}
+}
+
+// WithAppVulns scans for applications vulnerabilities as well
+func WithAppVulns() Ops {
+	return func(provider *Options) error {
+		provider.flags = append(provider.flags, "--app-vulns")
 		return nil
 	}
 }
