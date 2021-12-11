@@ -50,7 +50,7 @@ type Options struct {
 // NewProvider returns default provider options setup with the give options
 func NewProvider(options ...Ops) (Options, error) {
 	provider := Options{
-		flags: []string{"container", "test"},
+		flags: []string{"container", "test", "--app-vulns"},
 		out:   os.Stdout,
 		err:   os.Stderr,
 	}
