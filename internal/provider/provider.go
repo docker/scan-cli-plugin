@@ -170,6 +170,14 @@ func WithPath(path string) Ops {
 	}
 }
 
+// WithExperimental allows running `--json` flag in combination of `--app-vulns`
+func WithExperimental() Ops {
+	return func(provider *Options) error {
+		provider.flags = append(provider.flags, "--experimental")
+		return nil
+	}
+}
+
 func getToken(opts Options) (string, error) {
 	if opts.auth.Username == "" {
 		return "", fmt.Errorf(`You need to be logged in to Docker Hub to use scan feature.
