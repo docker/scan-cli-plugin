@@ -119,14 +119,15 @@ func configureProvider(ctx context.Context, dockerCli command.Cli, flags options
 	opts = append(opts, options...)
 	if flags.jsonFormat {
 		opts = append(opts, provider.WithJSON())
+		opts = append(opts, provider.WithExperimental())
 		if flags.groupIssues {
 			opts = append(opts, provider.WithGroupIssues())
 		}
 	} else if flags.groupIssues {
 		return nil, fmt.Errorf("--json flag is mandatory to use --group-issues flag")
-	} else {
-		opts = append(opts, provider.WithAppVulns())
 	}
+	opts = append(opts, provider.WithAppVulns())
+
 	if flags.dockerFilePath != "" {
 		opts = append(opts, provider.WithDockerFile(flags.dockerFilePath))
 		if flags.excludeBase {

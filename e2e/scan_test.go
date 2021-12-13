@@ -230,7 +230,7 @@ func TestScanWithFileAndExcludeBaseImageVulns(t *testing.T) {
 
 	cmd.Command = dockerCli.Command("scan", "--accept-license", "--file", "./testdata/Dockerfile", "--exclude-base", ImageBaseImageVulnerabilities)
 	output := icmd.RunCmd(cmd).Assert(t, icmd.Success).Combined()
-	assert.Assert(t, strings.Contains(output, "found 0 issues."))
+	assert.Assert(t, strings.Contains(output, "no vulnerable paths found."))
 }
 
 func TestScanWithExcludeBaseImageVulns(t *testing.T) {
@@ -431,7 +431,7 @@ func TestScanWithFileAndExcludeBaseImageVulnsContainerizedProvider(t *testing.T)
 
 	cmd.Command = dockerCli.Command("scan", "--file", dockerfilePath, "--exclude-base", ImageBaseImageVulnerabilities)
 	output := icmd.RunCmd(cmd).Assert(t, icmd.Success).Combined()
-	assert.Assert(t, strings.Contains(output, "found 0 issues."))
+	assert.Assert(t, strings.Contains(output, "no vulnerable paths found."))
 }
 
 func createSnykConfDirectories(t *testing.T, withConfFile bool, token string) (*fs.Dir, func()) {
