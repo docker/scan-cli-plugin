@@ -155,6 +155,8 @@ func WithGroupIssues() Ops {
 func WithAppVulns() Ops {
 	return func(provider *Options) error {
 		provider.flags = append(provider.flags, "--app-vulns")
+		// We started with a default depth value of 2
+		provider.flags = append(provider.flags, fmt.Sprintf("--nested-jars-path=%d", 2))
 		return nil
 	}
 }
