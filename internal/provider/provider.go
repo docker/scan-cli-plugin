@@ -164,8 +164,12 @@ func WithAppVulns() Ops {
 // WithPath update the provider binary with the path from the configuration
 func WithPath(path string) Ops {
 	return func(provider *Options) error {
-		if p, err := exec.LookPath("snyk"); err == nil && checkUserSnykBinaryVersion(p) {
-			path = p
+		if p, err := exec.LookPath("snyk"); err == nil {
+			if ok, err := checkUserSnykBinaryVersion(p); ok {
+				path = p
+			} else {
+				fmt.Printf("%s\n\n", err.Error())
+			}
 		}
 		provider.path = path
 		return nil

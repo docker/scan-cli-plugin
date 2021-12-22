@@ -22,6 +22,7 @@ import (
 	"runtime"
 	"testing"
 
+	"github.com/docker/scan-cli-plugin/internal/provider"
 	"gotest.tools/v3/assert"
 	is "gotest.tools/v3/assert/cmp"
 	"gotest.tools/v3/env"
@@ -67,11 +68,13 @@ func TestVersionSnykOldBinary(t *testing.T) {
 	cmd.Command = dockerCli.Command("scan", "--version")
 	output := icmd.RunCmd(cmd).Assert(t, icmd.Success).Combined()
 	expected := fmt.Sprintf(
-		`Version:    %s
+		`the Snyk version %s installed on your system is older as the one embedded by Docker Desktop (>=%s), using embedded Snyk version instead
+
+Version:    %s
 Git commit: %s
 Provider:   %s
-The Snyk version installed on your system does not match the docker scan requirements (>=1.385.0), using embedded Snyk version instead.
-`, internal.Version, internal.GitCommit, getProviderVersion("SNYK_DESKTOP_VERSION"))
+`, os.Getenv("SNYK_OLD_VERSION"), provider.SnykDesktopVersion,
+		internal.Version, internal.GitCommit, getProviderVersion("SNYK_DESKTOP_VERSION"))
 
 	assert.Equal(t, output, expected)
 }

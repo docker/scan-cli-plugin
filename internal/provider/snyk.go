@@ -31,8 +31,9 @@ import (
 	"github.com/mitchellh/go-homedir"
 )
 
-const (
-	minimalSnykVersion = ">=1.385.0"
+var (
+	// SnykDesktopVersion is the version of the Snyk CLI Binary embedded with Docker Desktop
+	SnykDesktopVersion = "unknown"
 )
 
 type snykProvider struct {
@@ -156,31 +157,36 @@ func isAuthenticatedOnSnyk() (string, error) {
 	return config.API, nil
 }
 
-func checkUserSnykBinaryVersion(path string) bool {
+func checkUserSnykBinaryVersion(path string) (bool, error) {
 	cmd := exec.Command(path, "--version")
 	buff := bytes.NewBuffer(nil)
 	cmd.Stdout = buff
 	cmd.Stderr = ioutil.Discard
 	if err := cmd.Run(); err != nil {
 		// an error occurred, so let's use the desktop binary
-		return false
+		return false, err
 	}
 	ver, err := semver.NewVersion(cleanVersion(buff.String()))
 	if err != nil {
-		return false
+		return false, err
 	}
-	constraint, err := semver.NewConstraint(minimalSnykVersion)
+	constraint, err := semver.NewConstraint(minimalSnykVersion())
 	if err != nil {
-		return false
+		return false, err
 	}
 	matchConstraint := constraint.Check(ver)
 	if !matchConstraint {
-		fmt.Fprintf(os.Stderr, "The Snyk version installed on your system does not match the docker scan requirements (%s), using embedded Snyk version instead.\n", minimalSnykVersion)
+		return matchConstraint, fmt.Errorf("the Snyk version %s installed on your system is older as the one embedded by Docker Desktop (%s), using embedded Snyk version instead",
+			ver, minimalSnykVersion())
 	}
-	return matchConstraint
+	return matchConstraint, nil
 }
 
 func cleanVersion(version string) string {
 	version = strings.TrimSpace(version)
 	return strings.Split(version, " ")[0]
+}
+
+func minimalSnykVersion() string {
+	return fmt.Sprintf(">=%s", SnykDesktopVersion)
 }
