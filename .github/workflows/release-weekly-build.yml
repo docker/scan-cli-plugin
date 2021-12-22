@@ -18,10 +18,10 @@ jobs:
     env:
       GO111MODULE: "on"
     steps:
-      - name: Set up Go 1.15
+      - name: Set up Go 1.17
         uses: actions/setup-go@v1
         with:
-          go-version: 1.15
+          go-version: 1.17
         id: go
 
       - name: Checkout code into the Go module directory
@@ -53,10 +53,10 @@ jobs:
         # Only the CLI is needed to run docker-scan e2e
         run: brew install docker
 
-      - name: Set up Go 1.15
+      - name: Set up Go 1.17
         uses: actions/setup-go@v2
         with:
-          go-version: 1.15
+          go-version: 1.17
         id: go
 
       - name: Checkout code into the Go module directory
@@ -74,6 +74,10 @@ jobs:
           E2E_HUB_USERNAME: ${{ secrets.E2E_HUB_USERNAME }}
           E2E_HUB_TOKEN: ${{ secrets.E2E_HUB_TOKEN }}
         run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile build test-unit e2e
+
+      - name: Build Mac arm64 binary
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile build-mac-arm64
 
       - name: Upload binary artifact
         if: ${{ github.event.inputs.tag != '' }} # don't push artifacts if no tag is specified
