@@ -15,7 +15,8 @@ STATIC_FLAGS= CGO_ENABLED=0
 LDFLAGS := "-s -w \
   -X $(PKG_NAME)/internal.GitCommit=$(COMMIT) \
   -X $(PKG_NAME)/internal.Version=$(TAG_NAME) \
-  -X $(PKG_NAME)/internal/provider.ImageDigest=$(SNYK_IMAGE_DIGEST)"
+  -X $(PKG_NAME)/internal/provider.ImageDigest=$(SNYK_IMAGE_DIGEST) \
+  -X $(PKG_NAME)/internal/provider.SnykDesktopVersion=$(SNYK_DESKTOP_VERSION)"
 GO_BUILD = $(STATIC_FLAGS) go build -trimpath -ldflags=$(LDFLAGS)
 
 SNYK_DOWNLOAD_NAME:=snyk-linux
@@ -36,6 +37,7 @@ endif
 
 VARS:= SNYK_DESKTOP_VERSION=${SNYK_DESKTOP_VERSION}\
 	SNYK_USER_VERSION=${SNYK_USER_VERSION}\
+	SNYK_OLD_VERSION=${SNYK_OLD_VERSION}\
 	DOCKER_CONFIG=$(PWD)/docker-config\
 	SNYK_OLD_PATH=$(PWD)/docker-config/snyk-old\
 	SNYK_USER_PATH=$(PWD)/docker-config/snyk-user\
