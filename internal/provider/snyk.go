@@ -176,7 +176,7 @@ func checkUserSnykBinaryVersion(path string) (bool, error) {
 	}
 	matchConstraint := constraint.Check(ver)
 	if !matchConstraint {
-		return matchConstraint, fmt.Errorf("the Snyk version %s installed on your system is older as the one embedded by Docker Desktop (%s), using embedded Snyk version instead",
+		return matchConstraint, fmt.Errorf("the Snyk version %s installed on your system is older than the one embedded by Docker Desktop (%s), using embedded Snyk version instead",
 			ver, minimalSnykVersion())
 	}
 	return matchConstraint, nil
