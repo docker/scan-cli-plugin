@@ -187,7 +187,7 @@ func WithExperimental() Ops {
 func getToken(opts Options) (string, error) {
 	if opts.auth.Username == "" {
 		return "", fmt.Errorf(`You need to be logged in to Docker Hub to use scan feature.
-please login to Docker Hub using the Docker Login command`)
+please login to Docker Hub using the docker login command`)
 	}
 	h := hub.GetInstance()
 	jwks, err := h.FetchJwks()
