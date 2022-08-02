@@ -61,6 +61,7 @@ test-unit:
 
 cross:
 	GOOS=linux   GOARCH=amd64 $(GO_BUILD) -o dist/docker-scan_linux_amd64 ./cmd/docker-scan
+	GOOS=linux   GOARCH=arm64 $(GO_BUILD) -o dist/docker-scan_linux_arm64 ./cmd/docker-scan
 	GOOS=darwin  GOARCH=amd64 $(GO_BUILD) -o dist/docker-scan_darwin_amd64 ./cmd/docker-scan
 	GOOS=darwin  GOARCH=arm64 $(GO_BUILD) -o dist/docker-scan_darwin_arm64 ./cmd/docker-scan
 	GOOS=windows GOARCH=amd64 $(GO_BUILD) -o dist/docker-scan_windows_amd64.exe ./cmd/docker-scan
