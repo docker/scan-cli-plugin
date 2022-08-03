@@ -25,7 +25,7 @@ PWD:=$(shell pwd)
 ifeq ($(GOOS),windows)
 	SNYK_DOWNLOAD_NAME:=snyk-win.exe
 	SNYK_BINARY=snyk.exe
-	PWD=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+	PWD=$(subst \,/,$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST)))))
 endif
 ifeq ($(GOOS),darwin)
 	SNYK_DOWNLOAD_NAME:=snyk-macos
