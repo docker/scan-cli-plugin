@@ -79,6 +79,10 @@ jobs:
         if: ${{ matrix.os == 'macos-latest' }}
         run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile build-mac-arm64
 
+      - name: Build Linux arm64 binary
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile build-linux-arm64
+
       - name: Upload binary artifact
         if: ${{ github.event.inputs.tag != '' }} # don't push artifacts if no tag is specified
         uses: actions/upload-artifact@v2
