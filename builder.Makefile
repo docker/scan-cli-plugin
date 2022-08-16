@@ -94,4 +94,4 @@ download:
 	curl https://github.com/snyk/snyk/releases/download/v${SNYK_DESKTOP_VERSION}/${SNYK_DOWNLOAD_NAME} -L -s -S -o docker-config/snyk-desktop/${SNYK_BINARY}
 	chmod +x docker-config/snyk-desktop/${SNYK_BINARY}
 	
-	GO111MODULE=on go get gotest.tools/gotestsum@v${GOTESTSUM_VERSION}
+	GO111MODULE=on go install gotest.tools/gotestsum@v${GOTESTSUM_VERSION}
