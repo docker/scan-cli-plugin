@@ -62,7 +62,7 @@ sleep 1000`), 0700))
 
 	// Add mock snyk binary to the $PATH
 	path := os.Getenv("PATH")
-	defer env.Patch(t, "PATH", fmt.Sprintf(pathFormat(), configDir+"/scan", path))()
+	env.Patch(t, "PATH", fmt.Sprintf(pathFormat(), configDir+"/scan", path))()
 
 	cmd.Command = dockerCli.Command("scan", "--version")
 	icmd.StartCmd(cmd)
