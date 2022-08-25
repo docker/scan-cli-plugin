@@ -186,8 +186,15 @@ func WithExperimental() Ops {
 
 func getToken(opts Options) (string, error) {
 	if opts.auth.Username == "" {
-		return "", fmt.Errorf(`You need to be logged in to Docker Hub to use scan feature.
-please login to Docker Hub using the Docker Login command`)
+		return "", fmt.Errorf(`You need to be logged in to Docker Hub to use the scan feature.
+
+If you are not using Docker Desktop, either
+- use the "docker login" CLI command with a username and password. Note this will not work if
+  2FA is required or if SSO enforcement is enabled on Docker Hub; or
+- use the "docker login" CLI command with a username and Personal Access Token. This requires
+  a token to be generated in advance.
+
+If you are using Docker Desktop: login via the UI or whale menu`)
 	}
 	h := hub.GetInstance()
 	jwks, err := h.FetchJwks()
