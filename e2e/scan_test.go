@@ -60,8 +60,7 @@ func TestScanFailsNoAuthentication(t *testing.T) {
 	cmd.Command = dockerCli.Command("scan", "--accept-license", "example:image")
 	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
 		ExitCode: 1,
-		Err: `You need to be logged in to Docker Hub to use scan feature.
-please login to Docker Hub using the Docker Login command`,
+		Err:      `failed to get DockerScanID: You need to be logged in to Docker Hub to use the scan feature.`,
 	})
 }
 
@@ -80,8 +79,7 @@ func TestScanFailsWithCleanMessage(t *testing.T) {
 	cmd.Command = dockerCli.Command("scan", "--accept-license", "example:image")
 	icmd.RunCmd(cmd).Assert(t, icmd.Expected{
 		ExitCode: 1,
-		Err: `You need to be logged in to Docker Hub to use scan feature.
-please login to Docker Hub using the Docker Login command`,
+		Err:      `failed to get DockerScanID: You need to be logged in to Docker Hub to use the scan feature.`,
 	})
 }
 
