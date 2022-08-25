@@ -53,31 +53,53 @@ jobs:
         # Only the CLI is needed to run docker-scan e2e
         run: brew install docker
 
-      - name: Set up Go 1.17
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.17
-        id: go
-
       - name: Checkout code into the Go module directory
         uses: actions/checkout@v2
         with:
           ref: ${{ github.event.inputs.branch }}
 
+      - name: Set up Go 1.17
+        uses: actions/setup-go@v3
+        with:
+          go-version-file: go.mod
+          check-latest: true
+          cache: true
+        id: go
+
       - name: Download binaries
         run: make -f builder.Makefile download
 
-      - name: Build binary and run tests
+      - name: Build binary
         env:
           E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
           E2E_HUB_URL: ${{ secrets.E2E_HUB_URL }}
           E2E_HUB_USERNAME: ${{ secrets.E2E_HUB_USERNAME }}
           E2E_HUB_TOKEN: ${{ secrets.E2E_HUB_TOKEN }}
-        run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile build test-unit e2e
+        run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile build
+
+      - name: E2E
+        env:
+          E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
+          E2E_HUB_URL: ${{ secrets.E2E_HUB_URL }}
+          E2E_HUB_USERNAME: ${{ secrets.E2E_HUB_USERNAME }}
+          E2E_HUB_TOKEN: ${{ secrets.E2E_HUB_TOKEN }}
+        run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile e2e
+
+      - name: Unit test
+        env:
+          E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
+          E2E_HUB_URL: ${{ secrets.E2E_HUB_URL }}
+          E2E_HUB_USERNAME: ${{ secrets.E2E_HUB_USERNAME }}
+          E2E_HUB_TOKEN: ${{ secrets.E2E_HUB_TOKEN }}
+        run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile test-unit
 
       - name: Build Mac arm64 binary
         if: ${{ matrix.os == 'macos-latest' }}
         run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile build-mac-arm64
+
+      - name: Build Linux arm64 binary
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile build-linux-arm64
 
       - name: Upload binary artifact
         if: ${{ github.event.inputs.tag != '' }} # don't push artifacts if no tag is specified

@@ -25,7 +25,7 @@ PWD:=$(shell pwd)
 ifeq ($(GOOS),windows)
 	SNYK_DOWNLOAD_NAME:=snyk-win.exe
 	SNYK_BINARY=snyk.exe
-	PWD=$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST))))
+	PWD=$(subst \,/,$(shell dirname $(realpath $(firstword $(MAKEFILE_LIST)))))
 endif
 ifeq ($(GOOS),darwin)
 	SNYK_DOWNLOAD_NAME:=snyk-macos
@@ -61,6 +61,7 @@ test-unit:
 
 cross:
 	GOOS=linux   GOARCH=amd64 $(GO_BUILD) -o dist/docker-scan_linux_amd64 ./cmd/docker-scan
+	GOOS=linux   GOARCH=arm64 $(GO_BUILD) -o dist/docker-scan_linux_arm64 ./cmd/docker-scan
 	GOOS=darwin  GOARCH=amd64 $(GO_BUILD) -o dist/docker-scan_darwin_amd64 ./cmd/docker-scan
 	GOOS=darwin  GOARCH=arm64 $(GO_BUILD) -o dist/docker-scan_darwin_arm64 ./cmd/docker-scan
 	GOOS=windows GOARCH=amd64 $(GO_BUILD) -o dist/docker-scan_windows_amd64.exe ./cmd/docker-scan
@@ -68,6 +69,10 @@ cross:
 build-mac-arm64:
 	mkdir -p bin
 	GOOS=darwin GOARCH=arm64 $(GO_BUILD) -o bin/docker-scan_darwin_arm64 ./cmd/docker-scan
+
+build-linux-arm64:
+	mkdir -p bin
+	GOOS=linux GOARCH=arm64 $(GO_BUILD) -o bin/docker-scan_linux_arm64 ./cmd/docker-scan
 
 .PHONY: build
 build:
@@ -89,4 +94,4 @@ download:
 	curl https://github.com/snyk/snyk/releases/download/v${SNYK_DESKTOP_VERSION}/${SNYK_DOWNLOAD_NAME} -L -s -S -o docker-config/snyk-desktop/${SNYK_BINARY}
 	chmod +x docker-config/snyk-desktop/${SNYK_BINARY}
 	
-	GO111MODULE=on go get gotest.tools/gotestsum@v${GOTESTSUM_VERSION}
+	GO111MODULE=on go install gotest.tools/gotestsum@v${GOTESTSUM_VERSION}

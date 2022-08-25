@@ -2,7 +2,7 @@
 
 set -eu
 
-go mod tidy
+go mod tidy -compat=1.17
 DIFF=$(git status --porcelain -- go.mod go.sum)
 
 if [ "$DIFF" ]; then
