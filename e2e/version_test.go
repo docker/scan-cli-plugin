@@ -123,5 +123,8 @@ Provider:   %s
 }
 
 func getProviderVersion(env string) string {
-	return fmt.Sprintf("Snyk (%s (standalone))", os.Getenv(env))
+	if runtime.GOOS != "windows" {
+		return fmt.Sprintf("Snyk (%s (standalone))", os.Getenv(env))
+	}
+	return fmt.Sprintf("Snyk (%s)", os.Getenv(env))
 }
