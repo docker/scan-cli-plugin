@@ -23,18 +23,20 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/docker/scan-cli-plugin/internal/proxy"
+
 	"github.com/docker/docker/api/types/registry"
 	"gopkg.in/square/go-jose.v2"
 )
 
-//Instance stores all the specific pieces needed to dialog with Hub
+// Instance stores all the specific pieces needed to dialog with Hub
 type Instance struct {
 	APIHubBaseURL string
 	JwksURL       string
 	RegistryInfo  *registry.IndexInfo
 }
 
-//GetInstance returns the current hub instance, which can be overridden by
+// GetInstance returns the current hub instance, which can be overridden by
 // DOCKER_SCAN_HUB_INSTANCE env var
 func GetInstance() *Instance {
 	override := os.Getenv("DOCKER_SCAN_HUB_INSTANCE")
@@ -48,8 +50,11 @@ func GetInstance() *Instance {
 	}
 }
 
-//FetchJwks fetches a jwks.json file and parses it
+// FetchJwks fetches a jwks.json file and parses it
 func (i *Instance) FetchJwks() (jose.JSONWebKeySet, error) {
+	if err := proxy.SetEnvForProxyFromRawURL(i.JwksURL); err != nil {
+		return jose.JSONWebKeySet{}, fmt.Errorf("failed to fetch JWKS: %s", err)
+	}
 	// fetch jwks.json file from URL
 	resp, err := http.Get(i.JwksURL)
 	if err != nil {

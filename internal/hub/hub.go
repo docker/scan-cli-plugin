@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/docker/scan-cli-plugin/internal/proxy"
 	"io/ioutil"
 	"net/http"
 
@@ -33,12 +34,12 @@ const (
 	ScanTokenURL = "/api/scan/v1/provider/token"
 )
 
-//Client sends authenticates on Hub and sends requests to the API
+// Client sends authenticates on Hub and sends requests to the API
 type Client struct {
 	Domain string
 }
 
-//Login logs into Hub and returns the auth token
+// Login logs into Hub and returns the auth token
 func (h *Client) Login(hubAuthConfig types.AuthConfig) (string, error) {
 	data, err := json.Marshal(hubAuthConfig)
 	if err != nil {
@@ -66,7 +67,7 @@ func (h *Client) Login(hubAuthConfig types.AuthConfig) (string, error) {
 	return creds.Token, nil
 }
 
-//GetScanID calls the scan service which returns a DockerScanID as a JWT token
+// GetScanID calls the scan service which returns a DockerScanID as a JWT token
 func (h *Client) GetScanID(hubToken string) (string, error) {
 	req, err := http.NewRequest("GET", h.Domain+ScanTokenURL, nil)
 	if err != nil {
@@ -81,6 +82,9 @@ func (h *Client) GetScanID(hubToken string) (string, error) {
 }
 
 func doRequest(req *http.Request) ([]byte, error) {
+	if err := proxy.SetEnvForProxyFromURL(req.URL); err != nil {
+		return nil, err
+	}
 	req.Header["Accept"] = []string{"application/json"}
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
