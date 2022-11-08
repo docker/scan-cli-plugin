@@ -45,6 +45,7 @@ type Options struct {
 	out     io.Writer
 	err     io.Writer
 	path    string
+	version string
 }
 
 // NewProvider returns default provider options setup with the give options
@@ -78,7 +79,7 @@ func WithAuthConfig(authResolver func(*registry.IndexInfo) types.AuthConfig) Ops
 	}
 }
 
-//WithContext update the provider with a cancelable context
+// WithContext update the provider with a cancelable context
 func WithContext(ctx context.Context) Ops {
 	return func(options *Options) error {
 		options.context = ctx
@@ -86,7 +87,7 @@ func WithContext(ctx context.Context) Ops {
 	}
 }
 
-//WithStreams sets the out and err streams to be used by commands
+// WithStreams sets the out and err streams to be used by commands
 func WithStreams(out, err io.Writer) Ops {
 	return func(options *Options) error {
 		options.out = out
@@ -180,6 +181,14 @@ func WithPath(path string) Ops {
 func WithExperimental() Ops {
 	return func(provider *Options) error {
 		provider.flags = append(provider.flags, "--experimental")
+		return nil
+	}
+}
+
+// WithVersion set the version of the scan cli plugin to the provider
+func WithVersion(version string) Ops {
+	return func(provider *Options) error {
+		provider.version = version
 		return nil
 	}
 }

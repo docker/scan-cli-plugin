@@ -144,6 +144,7 @@ func (d *dockerSnykProvider) createContainer(token string, containerName string)
 		"NO_UPDATE_NOTIFIER=true",
 		"SNYK_CFG_DISABLESUGGESTIONS=true",
 		"SNYK_INTEGRATION_NAME=DOCKER_DESKTOP",
+		"SNYK_INTEGRATION_VERSION=" + d.version,
 		"SNYK_UTM_MEDIUM=Partner",
 		"SNYK_UTM_SOURCE=Docker",
 		"SNYK_UTM_CAMPAIGN=Docker-Desktop-2020",
@@ -282,8 +283,12 @@ func (d *dockerSnykProvider) newCommand(envVars []string, arg ...string) (string
 			arg[index] = "--file=/app/Dockerfile"
 		}
 	}
-	defaultEnvs := []string{"NO_UPDATE_NOTIFIER=true", "SNYK_CFG_DISABLESUGGESTIONS=true",
-		"SNYK_INTEGRATION_NAME=DOCKER_DESKTOP"}
+	defaultEnvs := []string{
+		"NO_UPDATE_NOTIFIER=true",
+		"SNYK_CFG_DISABLESUGGESTIONS=true",
+		"SNYK_INTEGRATION_NAME=DOCKER_DESKTOP",
+		"SNYK_INTEGRATION_VERSION=" + d.version,
+	}
 	envVars = append(envVars, defaultEnvs...)
 
 	args := strslice.StrSlice{"snyk"}

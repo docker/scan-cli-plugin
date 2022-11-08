@@ -35,7 +35,8 @@ var (
 )
 
 const (
-	snykToken = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+	snykToken   = "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+	fakeVersion = "abcd1234"
 )
 
 func TestSnykLoginEnvVars(t *testing.T) {
@@ -48,8 +49,10 @@ func TestSnykLoginEnvVars(t *testing.T) {
 	err := provider.Authenticate(snykToken)
 	assert.NilError(t, err)
 
-	// SNYK_INTEGRATION is always set
+	// SNYK_INTEGRATION_NAME is always set
 	assert.Assert(t, strings.Contains(outStream.String(), "SNYK_INTEGRATION_NAME=DOCKER_DESKTOP"))
+	// SNYK_INTEGRATION_VERSION is always set
+	assert.Assert(t, strings.Contains(outStream.String(), "SNYK_INTEGRATION_VERSION="+fakeVersion))
 	// NO_UPDATE_NOTIFIER disables node.js automatic update notification in console
 	assert.Assert(t, strings.Contains(outStream.String(), "NO_UPDATE_NOTIFIER=true"))
 	// SNYK_CFG_DISABLESUGGESTIONS removes user hints from snyk
@@ -78,8 +81,10 @@ func TestSnykScanEnvVars(t *testing.T) {
 	err := provider.Scan("image")
 	assert.NilError(t, err)
 
-	// SNYK_INTEGRATION is always set
+	// SNYK_INTEGRATION_NAME is always set
 	assert.Assert(t, strings.Contains(outStream.String(), "SNYK_INTEGRATION_NAME=DOCKER_DESKTOP"))
+	// SNYK_INTEGRATION_VERSION is always set
+	assert.Assert(t, strings.Contains(outStream.String(), "SNYK_INTEGRATION_VERSION="+fakeVersion))
 	// NO_UPDATE_NOTIFIER disables node.js automatic update notification in console
 	assert.Assert(t, strings.Contains(outStream.String(), "NO_UPDATE_NOTIFIER=true"))
 	// SNYK_CFG_DISABLESUGGESTIONS removes user hints from snyk
@@ -95,7 +100,9 @@ func setupMockSnykBinary(t *testing.T) (Provider, *bytes.Buffer) {
 
 	defaultProvider, err := NewProvider(WithContext(context.Background()),
 		WithPath(snykPath),
-		WithStreams(outStream, errStream))
+		WithStreams(outStream, errStream),
+		WithVersion(fakeVersion),
+	)
 	assert.NilError(t, err)
 	provider, err := NewSnykProvider(
 		defaultProvider)
