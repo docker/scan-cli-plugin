@@ -112,7 +112,9 @@ func (s *snykProvider) newCommand(arg ...string) *exec.Cmd {
 	cmd.Env = append(os.Environ(),
 		"NO_UPDATE_NOTIFIER=true",
 		"SNYK_CFG_DISABLESUGGESTIONS=true",
-		"SNYK_INTEGRATION_NAME=DOCKER_DESKTOP")
+		"SNYK_INTEGRATION_NAME=DOCKER_DESKTOP",
+		"SNYK_INTEGRATION_VERSION="+s.version,
+	)
 	return cmd
 }
 

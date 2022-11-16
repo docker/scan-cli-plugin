@@ -214,7 +214,7 @@ func runAuthentication(ctx context.Context, dockerCli command.Cli, flags options
 func runScan(ctx context.Context, cmd *cobra.Command, dockerCli command.Cli, flags options, args []string) error {
 	scanProvider, err := configureProvider(ctx, dockerCli, flags, provider.WithAuthConfig(func(hub *registry.IndexInfo) types.AuthConfig {
 		return command.ResolveAuthConfig(context.Background(), dockerCli, hub)
-	}))
+	}), provider.WithVersion(internal.Version))
 	if len(args) != 1 {
 		if err := cmd.Usage(); err != nil {
 			return err
