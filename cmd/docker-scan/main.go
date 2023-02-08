@@ -82,6 +82,10 @@ func newScanCmd(ctx context.Context, dockerCli command.Cli) *cobra.Command {
 		Use:         "scan [OPTIONS] IMAGE",
 		Annotations: map[string]string{},
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if !flags.jsonFormat {
+				internal.PrintDeprecationMessage(dockerCli)
+			}
+
 			if flags.showVersion {
 				return runVersion(ctx, dockerCli, flags)
 			}
@@ -225,6 +229,11 @@ func runScan(ctx context.Context, cmd *cobra.Command, dockerCli command.Cli, fla
 		return err
 	}
 	err = scanProvider.Scan(args[0])
+
+	if !flags.jsonFormat {
+		internal.PrintDeprecationMessage(dockerCli)
+	}
+
 	if _, ok := err.(*exec.ExitError); ok {
 		os.Exit(1)
 	}
