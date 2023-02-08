@@ -18,6 +18,9 @@ jobs:
     env:
       GO111MODULE: "on"
     steps:
+      - name: Checkout code into the Go module directory
+        uses: actions/checkout@v2
+
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
@@ -25,9 +28,6 @@ jobs:
           check-latest: true
           cache: true
         id: go
-
-      - name: Checkout code into the Go module directory
-        uses: actions/checkout@v2
 
       - name: Check license headers
         run: make validate
