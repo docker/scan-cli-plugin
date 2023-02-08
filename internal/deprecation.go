@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	message = "> The `docker scan` **command is deprecated** and will no longer be supported after April 13, 2023.  \n" +
+	message = "> The `docker scan` **command is deprecated** and will no longer be supported after April 13th, 2023.  \n" +
 		"> Run the `docker scout cves` command to continue to get vulnerabilities on your images or install the Snyk CLI.  \n" +
 		"> See https://www.docker.com/products/docker-scout for more details."
 )

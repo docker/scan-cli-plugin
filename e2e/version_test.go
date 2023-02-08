@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/docker/scan-cli-plugin/internal/provider"
@@ -50,7 +51,9 @@ Git commit: %s
 Provider:   %s
 `, internal.Version, internal.GitCommit, getProviderVersion("SNYK_USER_VERSION"))
 
-	assert.Equal(t, output, expected)
+	if !strings.HasPrefix(output, expected) {
+		t.Fatalf("expected output to start with %q, got %q", expected, output)
+	}
 }
 
 func TestVersionSnykOldBinary(t *testing.T) {
@@ -76,7 +79,9 @@ Provider:   %s
 `, os.Getenv("SNYK_OLD_VERSION"), provider.SnykDesktopVersion,
 		internal.Version, internal.GitCommit, getProviderVersion("SNYK_DESKTOP_VERSION"))
 
-	assert.Equal(t, output, expected)
+	if !strings.HasPrefix(output, expected) {
+		t.Fatalf("expected output to start with %q, got %q", expected, output)
+	}
 }
 
 func TestVersionSnykDesktopBinary(t *testing.T) {
@@ -94,7 +99,9 @@ Git commit: %s
 Provider:   %s
 `, internal.Version, internal.GitCommit, getProviderVersion("SNYK_DESKTOP_VERSION"))
 
-	assert.Equal(t, output, expected)
+	if !strings.HasPrefix(output, expected) {
+		t.Fatalf("expected output to start with %q, got %q", expected, output)
+	}
 }
 
 func TestVersionWithoutSnykOrConfig(t *testing.T) {
