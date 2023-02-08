@@ -18,7 +18,6 @@ package e2e
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"runtime"
 	"strings"
@@ -52,7 +51,7 @@ func TestSnykAuthentication(t *testing.T) {
 	icmd.RunCmd(cmd).Assert(t, icmd.Success)
 
 	// snyk config file should be updated
-	buff, err := ioutil.ReadFile(homeDir.Join(".config", "configstore", "snyk.json"))
+	buff, err := os.ReadFile(homeDir.Join(".config", "configstore", "snyk.json"))
 	assert.NilError(t, err)
 	assert.Assert(t, strings.Contains(string(buff), token), string(buff))
 }
@@ -103,7 +102,7 @@ func TestAuthWithContainerizedSnyk(t *testing.T) {
 	icmd.RunCmd(cmd).Assert(t, icmd.Success)
 
 	// snyk config file should be created
-	buff, err := ioutil.ReadFile(homeDir.Join(".config", "configstore", "snyk.json"))
+	buff, err := os.ReadFile(homeDir.Join(".config", "configstore", "snyk.json"))
 	assert.NilError(t, err)
 	assert.Assert(t, strings.Contains(string(buff), token))
 }

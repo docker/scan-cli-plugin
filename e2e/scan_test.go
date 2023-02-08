@@ -19,7 +19,6 @@ package e2e
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -458,7 +457,7 @@ func createSnykConfFile(t *testing.T, token string) (*fs.Dir, func()) {
 }
 
 func patchConfig(t *testing.T, configDir, url, userName, password string) {
-	buff, err := ioutil.ReadFile(filepath.Join(configDir, "config.json"))
+	buff, err := os.ReadFile(filepath.Join(configDir, "config.json"))
 	assert.NilError(t, err)
 	var conf configfile.ConfigFile
 	assert.NilError(t, json.Unmarshal(buff, &conf))
@@ -472,7 +471,7 @@ func patchConfig(t *testing.T, configDir, url, userName, password string) {
 	buff, err = json.Marshal(&conf)
 	assert.NilError(t, err)
 
-	assert.NilError(t, ioutil.WriteFile(filepath.Join(configDir, "config.json"), buff, 0644))
+	assert.NilError(t, os.WriteFile(filepath.Join(configDir, "config.json"), buff, 0644))
 }
 
 func createScanConfigFile(t *testing.T, configDir string) {
@@ -490,6 +489,6 @@ func createScanConfigFileOptinAndPath(t *testing.T, configDir string, optin bool
 	}
 	buf, err := json.MarshalIndent(conf, "", "  ")
 	assert.NilError(t, err)
-	err = ioutil.WriteFile(filepath.Join(configDir, "scan", "config.json"), buf, 0644)
+	err = os.WriteFile(filepath.Join(configDir, "scan", "config.json"), buf, 0644)
 	assert.NilError(t, err)
 }

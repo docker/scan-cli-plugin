@@ -1,4 +1,4 @@
-// +build !windows
+//go:build !windows
 
 /*
    Copyright 2020 Docker Inc.
@@ -21,7 +21,6 @@ package e2e
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -54,7 +53,7 @@ func TestFirstScanOptinMessage(t *testing.T) {
 	assert.Assert(t, strings.Contains(result.Combined(), `Docker Scan relies upon access to Snyk, a third party provider, do you consent to proceed using Snyk? (y/N)`))
 
 	// check the consent has been stored in config file
-	data, err := ioutil.ReadFile(filepath.Join(configDir, "scan", "config.json"))
+	data, err := os.ReadFile(filepath.Join(configDir, "scan", "config.json"))
 	assert.NilError(t, err)
 	var conf config.Config
 	assert.NilError(t, json.Unmarshal(data, &conf))
@@ -74,7 +73,7 @@ func TestRefuseOptinWithDisableFlag(t *testing.T) {
 	})
 
 	// check the consent has been stored in config file
-	data, err := ioutil.ReadFile(filepath.Join(configDir, "scan", "config.json"))
+	data, err := os.ReadFile(filepath.Join(configDir, "scan", "config.json"))
 	assert.NilError(t, err)
 	var conf config.Config
 	assert.NilError(t, json.Unmarshal(data, &conf))

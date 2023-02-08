@@ -18,10 +18,12 @@ jobs:
     env:
       GO111MODULE: "on"
     steps:
-      - name: Set up Go 1.17
-        uses: actions/setup-go@v1
+      - name: Set up Go
+        uses: actions/setup-go@v3
         with:
-          go-version: 1.17
+          go-version-file: go.mod
+          check-latest: true
+          cache: true
         id: go
 
       - name: Checkout code into the Go module directory
@@ -32,7 +34,7 @@ jobs:
 
       - name: Run golangci-lint
         run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b . v1.27.0
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b . v1.51.1
           ./golangci-lint run
 
   build:
@@ -58,7 +60,7 @@ jobs:
         with:
           ref: ${{ github.event.inputs.branch }}
 
-      - name: Set up Go 1.17
+      - name: Set up Go
         uses: actions/setup-go@v3
         with:
           go-version-file: go.mod

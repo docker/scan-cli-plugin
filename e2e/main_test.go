@@ -18,7 +18,6 @@ package e2e
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -42,7 +41,7 @@ func (d dockerCliCommand) createTestCmd() (icmd.Cmd, string, func()) {
 }
 
 func (d dockerCliCommand) createTestCommand(withSnykBinary bool) (icmd.Cmd, string, func()) {
-	configDir, err := ioutil.TempDir("", "config")
+	configDir, err := os.MkdirTemp(os.TempDir(), "config")
 	if err != nil {
 		panic(err)
 	}
@@ -87,7 +86,7 @@ func (d dockerCliCommand) Command(args ...string) []string {
 func TestMain(m *testing.M) {
 	// Prepare docker cli to call the docker-scan plugin binary:
 	// - Create a symbolic link with the docker-scan binary to the plugin directory
-	cliPluginDir, err := ioutil.TempDir("", "configContent")
+	cliPluginDir, err := os.MkdirTemp(os.TempDir(), "configContent")
 	if err != nil {
 		panic(err)
 	}
@@ -104,11 +103,11 @@ func copyBinary(binaryName, sourceDir, configDir string) {
 	if runtime.GOOS == "windows" {
 		binaryName += ".exe"
 	}
-	input, err := ioutil.ReadFile(filepath.Join(sourceDir, binaryName))
+	input, err := os.ReadFile(filepath.Join(sourceDir, binaryName))
 	if err != nil {
 		panic(err)
 	}
-	err = ioutil.WriteFile(filepath.Join(configDir, binaryName), input, 0744)
+	err = os.WriteFile(filepath.Join(configDir, binaryName), input, 0744)
 	if err != nil {
 		panic(err)
 	}

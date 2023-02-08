@@ -18,7 +18,6 @@ package config
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -29,7 +28,7 @@ import (
 )
 
 func TestSaveConfigFile(t *testing.T) {
-	configDir, err := ioutil.TempDir("", "config")
+	configDir, err := os.MkdirTemp(os.TempDir(), "config")
 	assert.NilError(t, err)
 	defer os.RemoveAll(configDir) //nolint:errcheck
 

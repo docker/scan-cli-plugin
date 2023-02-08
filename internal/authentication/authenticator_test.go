@@ -23,9 +23,10 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -44,7 +45,7 @@ func TestHubAuthenticateNegociatesToken(t *testing.T) {
 		switch r.URL.String() {
 		case hub.LoginURL:
 			assert.Equal(t, r.Method, http.MethodPost)
-			buf, err := ioutil.ReadAll(r.Body)
+			buf, err := io.ReadAll(r.Body)
 			assert.NilError(t, err)
 			var actualAuthConfig types.AuthConfig
 			assert.NilError(t, json.Unmarshal(buf, &actualAuthConfig))
@@ -158,7 +159,7 @@ func TestUpdateLocalToken(t *testing.T) {
 
 			err := authenticator.updateLocalToken(authConfig, "ZZZZ.YYYY.XXXX")
 			assert.NilError(t, err)
-			actual, err := ioutil.ReadFile(dir.Join("tokens.json"))
+			actual, err := os.ReadFile(dir.Join("tokens.json"))
 			assert.NilError(t, err)
 			assert.Equal(t, string(actual), testCase.expected)
 		})

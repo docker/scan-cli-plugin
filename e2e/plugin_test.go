@@ -18,7 +18,6 @@ package e2e
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -56,7 +55,7 @@ func TestHandleCtrlCGracefully(t *testing.T) {
 	defer cleanup()
 
 	// Create a dummy snyk binary which takes long to exit
-	assert.NilError(t, ioutil.WriteFile(filepath.Join(configDir, "scan", "snyk"), []byte(`#!/bin/sh
+	assert.NilError(t, os.WriteFile(filepath.Join(configDir, "scan", "snyk"), []byte(`#!/bin/sh
 sleep 1000`), 0700))
 	createScanConfigFile(t, configDir)
 

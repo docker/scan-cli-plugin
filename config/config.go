@@ -18,7 +18,6 @@ package config
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -48,7 +47,7 @@ func ReadConfigFile() (Config, error) {
 			}
 		}
 	}
-	buf, err := ioutil.ReadFile(path)
+	buf, err := os.ReadFile(path)
 	if err != nil {
 		_ = os.Remove(path)
 		return conf, errors.Wrap(err, "failed to read docker scan configuration file. Please restart Docker Desktop")
@@ -72,5 +71,5 @@ func SaveConfigFile(conf Config) error {
 	}
 
 	path := filepath.Join(cliConfig.Dir(), "scan", "config.json")
-	return errors.Wrap(ioutil.WriteFile(path, out, os.FileMode(0644)), "failed to write docker scan configuration file")
+	return errors.Wrap(os.WriteFile(path, out, os.FileMode(0644)), "failed to write docker scan configuration file")
 }

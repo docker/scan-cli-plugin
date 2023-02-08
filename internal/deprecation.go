@@ -31,6 +31,7 @@ const (
 		"> See https://www.docker.com/products/docker-scout for more details."
 )
 
+// PrintDeprecationMessage displays on stderr the deprecation notice.
 func PrintDeprecationMessage(cli command.Cli) {
 	r := getTermRenderer()
 	str, err := r.Render(message)

@@ -20,7 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -144,7 +144,7 @@ func isAuthenticatedOnSnyk() (string, error) {
 		return "", err
 	}
 	snykConfFilePath := filepath.Join(home, ".config", "configstore", "snyk.json")
-	buff, err := ioutil.ReadFile(snykConfFilePath)
+	buff, err := os.ReadFile(snykConfFilePath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return "", nil
@@ -163,7 +163,7 @@ func checkUserSnykBinaryVersion(path string) (bool, error) {
 	cmd := exec.Command(path, "--version")
 	buff := bytes.NewBuffer(nil)
 	cmd.Stdout = buff
-	cmd.Stderr = ioutil.Discard
+	cmd.Stderr = io.Discard
 	if err := cmd.Run(); err != nil {
 		// an error occurred, so let's use the desktop binary
 		return false, err

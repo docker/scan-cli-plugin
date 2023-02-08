@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -324,7 +323,7 @@ func getSnykAuthenticationToken() (string, error) {
 		return "", err
 	}
 	snykConfFilePath := filepath.Join(home, ".config", "configstore", "snyk.json")
-	buff, err := ioutil.ReadFile(snykConfFilePath)
+	buff, err := os.ReadFile(snykConfFilePath)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return "", nil

@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -37,7 +36,7 @@ const (
 	expirationWindow = 1 * time.Minute
 )
 
-//Authenticator logs on docker Hub and retrieves a DockerScanID
+// Authenticator logs on docker Hub and retrieves a DockerScanID
 // if the one stored locally has expired
 type Authenticator struct {
 	hub        hub.Client
@@ -45,7 +44,7 @@ type Authenticator struct {
 	jwks       jose.JSONWebKeySet
 }
 
-//NewAuthenticator returns an Authenticator
+// NewAuthenticator returns an Authenticator
 // configured to run against Docker Hub prod or staging
 func NewAuthenticator(jwks jose.JSONWebKeySet, apiHubBaseURL string) *Authenticator {
 	return &Authenticator{
@@ -55,7 +54,7 @@ func NewAuthenticator(jwks jose.JSONWebKeySet, apiHubBaseURL string) *Authentica
 	}
 }
 
-//GetToken checks the local DockerScanID content for expiry,
+// GetToken checks the local DockerScanID content for expiry,
 // if expired it negotiates a new one on Docker Hub.
 func (a *Authenticator) GetToken(hubAuthConfig types.AuthConfig) (string, error) {
 	// Retrieve token from local storage
@@ -79,7 +78,7 @@ func (a *Authenticator) GetToken(hubAuthConfig types.AuthConfig) (string, error)
 }
 
 func (a *Authenticator) getLocalToken(hubAuthConfig types.AuthConfig) string {
-	buf, err := ioutil.ReadFile(a.tokensPath)
+	buf, err := os.ReadFile(a.tokensPath)
 	if errors.Is(err, os.ErrNotExist) {
 		return ""
 	}
@@ -151,7 +150,7 @@ func (a *Authenticator) updateLocalToken(hubAuthConfig types.AuthConfig, token s
 		mode = stats.Mode()
 	}
 
-	buf, err := ioutil.ReadFile(a.tokensPath)
+	buf, err := os.ReadFile(a.tokensPath)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
@@ -162,5 +161,5 @@ func (a *Authenticator) updateLocalToken(hubAuthConfig types.AuthConfig, token s
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(a.tokensPath, buf, mode)
+	return os.WriteFile(a.tokensPath, buf, mode)
 }
