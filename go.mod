@@ -6,7 +6,7 @@ require (
 	github.com/Masterminds/semver/v3 v3.1.1
 	github.com/charmbracelet/glamour v0.6.0
 	github.com/docker/cli v20.10.17+incompatible
-	github.com/docker/docker v20.10.17+incompatible
+	github.com/docker/docker v20.10.24+incompatible
 	github.com/fatih/color v1.7.0
 	github.com/google/uuid v1.3.0
 	github.com/mitchellh/go-homedir v1.1.0
