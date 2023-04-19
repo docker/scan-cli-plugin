@@ -25,18 +25,20 @@ import (
 	"golang.org/x/term"
 )
 
-const (
-	message = "> The `docker scan` **command is deprecated** and will no longer be supported after April 13th, 2023.  \n" +
-		"> Run the `docker scout cves` command to continue to get vulnerabilities on your images or install the Snyk CLI.  \n" +
-		"> See https://www.docker.com/products/docker-scout for more details."
+var (
+	eolMessage = fmt.Sprintf(`
+The %s command has been removed.
+
+To continue learning about the vulnerabilities of your images, and many other features, use the new %s command.
+Run %s, or learn more at %s
+`, "`docker scan`", "`docker scout`", "`docker scout --help`", "https://docs.docker.com/engine/reference/commandline/scout/")
 )
 
-// PrintDeprecationMessage displays on stderr the deprecation notice.
-func PrintDeprecationMessage(cli command.Cli) {
+func PrintEOLMessage(cli command.Cli) {
 	r := getTermRenderer()
-	str, err := r.Render(message)
+	str, err := r.Render(eolMessage)
 	if err != nil {
-		_, _ = fmt.Fprintln(cli.Err(), message)
+		_, _ = fmt.Fprintln(cli.Err(), eolMessage)
 	} else {
 		_, _ = fmt.Fprintln(cli.Err(), str)
 	}

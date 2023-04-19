@@ -2,6 +2,16 @@
 
 # Docker Scan
 
+:warning:
+
+The `docker scan` command has been removed.
+
+To continue learning about the vulnerabilities of your images, and many other features, use the new `docker scout` command.
+
+Run `docker scout --help`, or learn more at https://docs.docker.com/engine/reference/commandline/scout/
+
+---
+
 Docker Scan is a Command Line Interface to run vulnerability detection on your Dockerfiles and Docker images.
 
 

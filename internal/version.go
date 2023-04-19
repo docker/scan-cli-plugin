@@ -19,8 +19,6 @@ package internal
 import (
 	"fmt"
 	"strings"
-
-	"github.com/docker/scan-cli-plugin/internal/provider"
 )
 
 var (
@@ -31,16 +29,11 @@ var (
 )
 
 // FullVersion return plugin version, git commit and the provider cli version
-func FullVersion(scanProvider provider.Provider) (string, error) {
-	providerVersion, err := scanProvider.Version()
-	if err != nil {
-		return "", err
-	}
+func FullVersion() string {
 	res := []string{
 		fmt.Sprintf("Version:    %s", Version),
 		fmt.Sprintf("Git commit: %s", GitCommit),
-		fmt.Sprintf("Provider:   %s", providerVersion),
 	}
 
-	return strings.Join(res, "\n"), nil
+	return strings.Join(res, "\n")
 }

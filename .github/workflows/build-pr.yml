@@ -51,20 +51,11 @@ jobs:
           cache: true
         id: go
 
-      - name: Download binaries
-        run: make -f builder.Makefile download
-
       - name: Build binary
         run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile build
 
       - name: Build Cross
         run: make cross
-
-      - name: Unit Tests
-        run: make test-unit
-
-      - name: End-to-end Tests
-        run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile e2e
 
       - name: Upload binary artifact
         uses: actions/upload-artifact@v2

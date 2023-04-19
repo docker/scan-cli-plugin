@@ -18,18 +18,10 @@ BUILD_ARGS := --build-arg GO_VERSION=$(GO_VERSION)\
 	--build-arg CLI_VERSION=$(CLI_VERSION)\
 	--build-arg ALPINE_VERSION=$(ALPINE_VERSION)\
 	--build-arg GOLANGCI_LINT_VERSION=$(GOLANGCI_LINT_VERSION) \
-	--build-arg TAG_NAME=$(GIT_TAG_NAME) \
-	--build-arg GOTESTSUM_VERSION=$(GOTESTSUM_VERSION) \
-	--build-arg SNYK_IMAGE_DIGEST=$(SNYK_IMAGE_DIGEST)
-
-E2E_ENV := --env E2E_TEST_AUTH_TOKEN \
-           --env E2E_HUB_URL \
-           --env E2E_HUB_USERNAME \
-           --env E2E_HUB_TOKEN \
-           --env E2E_TEST_NAME
+	--build-arg TAG_NAME=$(GIT_TAG_NAME)
 
 .PHONY: all
-all: lint validate build test
+all: lint validate build
 
 .PHONY: build
 build: ## Build docker-scan in a container
@@ -48,24 +40,6 @@ cross: ## Cross compile docker-scan binaries in a container
 install: build ## Install docker-scan to your local cli-plugins directory
 	mkdir -p $(HOME)/.docker/cli-plugins
 	cp bin/$(PLATFORM_BINARY) $(HOME)/.docker/cli-plugins/$(BINARY)
-
-.PHONY: test ## Run unit tests then end-to-end tests
-test: test-unit e2e
-
-.PHONY: e2e-build
-e2e-build:
-	docker build $(BUILD_ARGS) . --target e2e -t docker-scan:e2e
-
-.PHONY: e2e
-e2e: e2e-build ## Run the end-to-end tests
-	@docker run $(E2E_ENV) --rm -v /var/run/docker.sock:/var/run/docker.sock -v $(shell go env GOCACHE):/root/.cache/go-build docker-scan:e2e
-
-test-unit-build:
-	docker build $(BUILD_ARGS) . --target test-unit -t docker-scan:test-unit
-
-.PHONY: test-unit
-test-unit: test-unit-build ## Run unit tests
-	docker run --rm -v $(shell go env GOCACHE):/root/.cache/go-build docker-scan:test-unit
 
 .PHONY: lint
 lint: ## Run the go linter

@@ -68,9 +68,6 @@ jobs:
           cache: true
         id: go
 
-      - name: Download binaries
-        run: make -f builder.Makefile download
-
       - name: Build binary
         env:
           E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
@@ -78,22 +75,6 @@ jobs:
           E2E_HUB_USERNAME: ${{ secrets.E2E_HUB_USERNAME }}
           E2E_HUB_TOKEN: ${{ secrets.E2E_HUB_TOKEN }}
         run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile build
-
-      - name: E2E
-        env:
-          E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
-          E2E_HUB_URL: ${{ secrets.E2E_HUB_URL }}
-          E2E_HUB_USERNAME: ${{ secrets.E2E_HUB_USERNAME }}
-          E2E_HUB_TOKEN: ${{ secrets.E2E_HUB_TOKEN }}
-        run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile e2e
-
-      - name: Unit test
-        env:
-          E2E_TEST_AUTH_TOKEN: ${{ secrets.E2E_TEST_AUTH_TOKEN }}
-          E2E_HUB_URL: ${{ secrets.E2E_HUB_URL }}
-          E2E_HUB_USERNAME: ${{ secrets.E2E_HUB_USERNAME }}
-          E2E_HUB_TOKEN: ${{ secrets.E2E_HUB_TOKEN }}
-        run: make TAG_NAME=${{ github.event.inputs.tag }} -f builder.Makefile test-unit
 
       - name: Build Mac arm64 binary
         if: ${{ matrix.os == 'macos-latest' }}
