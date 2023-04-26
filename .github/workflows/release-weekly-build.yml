@@ -1,7 +1,5 @@
-name: Release and Weekly Build
+name: Release Build
 on:
-  schedule:
-    - cron: "0 0 * * SUN"
   workflow_dispatch:
     inputs:
       branch:
